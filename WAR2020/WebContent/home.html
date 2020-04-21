@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="ISO-8859-1">
+<title>Chat application</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.0/jquery.min.js"></script>
+<link href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.bundle.min.js"></script>
+
+<style>
+.btn {
+	margin: 5px 0px 0px 5px;
+	width: 100%;
+}
+
+.select{
+	margin: 5px 0px 0px 5px;
+}
+
+</style>
+
+<script>
+//FUNKCIJA ZA PRAVLJENJE UUIDa
+//*****************************
+function uuidv4() {
+	  return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
+	    (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+	  )
+	}
+//*******************************
+
+let socket;
+let host = "ws://localhost:8080/WAR2020/ws";
+let username = '';
+let sessionId = '';
+
+
+
+window.onload = function() {
+	username = sessionStorage.getItem('username');
+	$('#welcomeId').append(", " + username);
+	if (username === null) {
+		window.location.href = './index.html';
+		return;
+	}
+	alert("Logged in user: " + username);
+	
+	$.ajax({
+			url: "rest/chat/users/registered",
+			type: "GET",
+			success: function(data) {
+				$('#selectUser').empty();
+				$('#selectUser').append('<option disabled selected hidden="true">Select user</option>');
+				for (usr of data) {
+					$('#selectUser').append(new Option(usr,usr));
+				}
+				
+			}
+		});
+}
+
+$(document).ready(function() {
+	$("#btnSend").click(function() {
+		const msgText = $("#msgText").val();
+		if (msgText === "" || msgText === undefined) {
+			alert('Message cannot be empty');
+			return;
+		}
+		
+		$.ajax({
+			url: "rest/chat/messages/all",
+			type: "POST",
+			data: JSON.stringify({"id": uuidv4(), "content":msgText, "sender":username, "receivers": []}),
+			contentType: "application/json",
+			dataType: "json",
+			complete: function(data) {
+				alert("Message sent to all active users(ili treba za registrovane?)");
+				console.log("Sent message to the server.");
+			}	
+		});
+	});
+	
+	$("#btnSendOne").click(function() {
+		const userUsername = $('#selectUser :selected').val();
+		const msgText = $("#msgText").val();
+		if (msgText === "" || msgText === undefined || userUsername === "Select user") {
+			alert('Message cannot be empty and user must be selected');
+			return;
+		}
+		const userArray = [];
+		userArray.push(userUsername);
+		$.ajax({
+			url: "rest/chat/messages/user",
+			type: "POST",
+			data: JSON.stringify({"id": uuidv4(), "content":msgText, "sender":username, "receivers": userArray}),
+			contentType: "application/json",
+			dataType: "json",
+			complete: function(data) {
+				alert("Message sent to user: " + userUsername);
+				console.log("Sent message to the server to one user.");
+			}	
+		});
+		
+	});
+	
+	$('#btnRefreshRegistered').click(function() {
+		$.ajax({
+			url: "rest/chat/users/registered",
+			type: "GET",
+			success: function(data) {
+				$('#selectUser').empty();
+				$('#selectUser').append('<option disabled selected hidden="true">Select user</option>');
+				for (usr of data) {
+					$('#selectUser').append(new Option(usr,usr));
+				}
+				
+			}
+		});
+	});
+	
+	$('#btnLoggedIn').click(function() {
+		$.ajax({
+			url: "rest/chat/users/loggedin",
+			type: "GET",
+			success: function(data) {
+				let allUsers = "";
+				for (usr of data) {
+					allUsers += "Username: " + usr + "\n";
+				}
+				alert(allUsers);
+			}
+		});
+		
+	});
+	
+	$('#btnRegistered').click(function() {
+		$.ajax({
+			url: "rest/chat/users/registered",
+			type: "GET",
+			success: function(data) {
+				let allUsers = "";
+				for (usr of data) {
+					allUsers += "Username: " + usr + "\n";
+				}
+				alert(allUsers);
+			}
+		});
+		
+	});
+	
+	$('#btnInbox').click(function() {
+		$.ajax({
+			url: "rest/chat/messages/" + username,
+			type: "GET",
+			success: function(data) {
+				/*let allMessages = "";
+				for (usr of data) {
+					allUsers += "Username: " + usr + "\n";
+				}
+				alert(allUsers);*/
+			}
+		});
+		
+	});
+	
+	$('#btnLogout').click(function() {
+		
+		$.ajax({
+			url: "rest/chat/users/logout/" + username,
+			type: "DELETE",
+			data: JSON.stringify({"username":username, "password":"123"}),
+			contentType: "application/json",
+			complete: function(data) {
+				sessionStorage.setItem('username', '');
+				sessionId = '';
+				console.log("Logout successfull. \nUsername: " + username);
+				window.location.href='./index.html';
+			}
+		});
+	});
+	
+	try {
+		socket = new WebSocket(host);
+		console.log('connect: Socket Status: ' + socket.readyState);
+		
+		socket.onopen = function() {
+			console.log('onopen: Socket Status: ' + socket.readyState + ' (open)');
+		}
+		
+		socket.onmessage = function(msg) {
+			if (msg.data.includes("ID_MOJE_SESIJE")) {
+				sessionId = msg.data.substr(14);
+				alert("ID moje sesije: " + sessionId);
+				
+				console.log('SESSIONO ID: ' + msg.data + "\nUSERNAME: " + username);
+				$.ajax({
+					url: "rest/chat/users/update_session_id/" + username,
+					type: "POST",
+					data: JSON.stringify({"id":sessionId}),
+					contentType: "application/json",
+					dataType: "json",
+					complete: function(data) {
+						console.log("Session id update successfull. \nUsername: " + username);
+					}
+				});
+				
+			}
+			
+		}
+		
+		socket.onclose = function() {
+			console.log("WS closed")
+			sessionStorage.setItem('username', '');
+			socket = null;
+		}
+		
+	} catch(exception) {
+		console.log('Error: ' + exception);
+	}
+});
+</script>
+
+</head>
+<body>
+	<h1 id="welcomeId">Hello</h1>
+	
+	<a href="rest/chat/test">Test</a> <br /> <br />
+		
+	<table>
+		<tr>
+			<td valign="top"><label>Message: </label></td>
+			<td valign="top" rowspan="3"><textarea id="msgText" class="form-control" rows="5" cols="60" placeholder="message"></textarea></td>
+			<td valign="top"><button id="btnSend" class="btn btn-primary">Send to all users</button></td>
+			<td valign="top"><button id="btnSendOne" class="btn btn-primary">Send to one user</button></td>
+
+		</tr>
+		
+		<tr>
+			<td></td><td></td>
+			<td><select id="selectUser" class="select form-control">
+					<option value="" disabled selected hidden="true">Please select user</option>
+				</select>
+			</td>
+		</tr>
+		
+		<tr>
+			<td></td><td></td>
+			<td><button id="btnRefreshRegistered" class="btn btn-primary">Refresh list</button></td>
+		</tr>
+		
+		<tr>
+			<td><br/></td>
+		</tr>
+
+		
+		<tr>
+			<td></td><td></td><td></td>
+			<td align="right"><button id="btnInbox" class="btn btn-primary">Get my messages</button></td>
+		</tr>
+		<tr>
+			<td></td><td></td><td></td>
+			<td align="right" colspan="2"><button id="btnLoggedIn" class="btn btn-primary">Get logged in users</button></td>
+		</tr>
+		<tr>
+			<td></td><td></td><td></td>
+			<td align="right" colspan="2"><button id="btnRegistered" class="btn btn-primary">Get registered users</button></td>
+		</tr>
+		
+		<tr>
+			<td><br/></td>
+		</tr>
+		
+		<tr>
+			<td></td><td></td><td></td>
+			<td align="right" colspan="2"><button id="btnLogout" class="btn btn-primary">Logout</button></td>
+		</tr>
+	</table>
+</body>
+</html>
