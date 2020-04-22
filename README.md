@@ -1,5 +1,8 @@
 # Chat zadatak iz agentskih tehnologija
 
-dodati EAR2020 projekat u WildFly server, uraditi Full publish i pokrenuti server
+pokrenuti EAR2020 projekat na WildFly serveru
+
+trenutno se sva komunikacija obavlja putem rest poziva,
+websocket-i se koriste samo za slanje poruke svim korisnicima
 
 http://localhost:8080/WAR2020/
