@@ -9,7 +9,6 @@ public class User implements Serializable {
     private static final long serialVersionUID = 1L;
     private String username;
     private String password;
-    private String sessionId;
     private ArrayList<UUID> messages;
 
     public User () {
@@ -21,10 +20,9 @@ public class User implements Serializable {
         this.password = password;
     }
     
-    public User(String username, String password, String sessionId, ArrayList<UUID> messages) {
+    public User(String username, String password, ArrayList<UUID> messages) {
         this.username = username;
         this.password = password;
-        this.sessionId = sessionId;
         this.messages = messages;
     }
     
@@ -44,15 +42,6 @@ public class User implements Serializable {
         this.password = password;
     }
     
-    
-    public String getSessionId() {
-		return sessionId;
-	}
-
-	public void setSessionId(String sessionId) {
-		this.sessionId = sessionId;
-	}
-
 	public ArrayList<UUID> getMessages() {
 		return messages;
 	}

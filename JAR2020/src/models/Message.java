@@ -11,18 +11,20 @@ public class Message implements Serializable {
     private String content;
     private String sender;
     private ArrayList<String> receivers;
+    private boolean isPrivate;
     
     public Message() {
     	
     }
     
     
-	public Message(UUID id, String content, String sender, ArrayList<String> receivers) {
+	public Message(UUID id, String content, String sender, ArrayList<String> receivers, boolean isPrivate) {
 		super();
 		this.id = id;
 		this.content = content;
 		this.sender = sender;
 		this.receivers = receivers;
+		this.isPrivate = isPrivate;
 	}
 
 
@@ -63,6 +65,16 @@ public class Message implements Serializable {
 
 	public void setReceivers(ArrayList<String> receivers) {
 		this.receivers = receivers;
+	}
+	
+
+	public boolean isPrivate() {
+		return isPrivate;
+	}
+
+
+	public void setPrivate(boolean isPrivate) {
+		this.isPrivate = isPrivate;
 	}
 
 

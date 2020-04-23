@@ -1,9 +1,7 @@
 package beans;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
-import java.util.UUID;
 
 //import javax.annotation.Resource;
 import javax.ejb.EJB;
@@ -27,7 +25,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import models.Message;
-import models.MySession;
 import models.User;
 import ws.WSEndPoint;
 
@@ -36,9 +33,8 @@ import ws.WSEndPoint;
 @LocalBean
 public class ChatBean implements ChatRemote, ChatLocal {
 	
-	private HashMap<String, User> users = new HashMap<>();
-	private HashMap<String, User> loggedInUsers = new HashMap<>(); 
-	private HashMap<UUID, Message> allMessages = new HashMap<>();
+	@EJB
+	DBBean db;
 	
 	@EJB
 	WSEndPoint ws;
@@ -93,15 +89,15 @@ public class ChatBean implements ChatRemote, ChatLocal {
 		System.out.println("\n\n-----------------------------------------------------------");
 		System.out.println("POGODIO REGISTER ENDPOINT");
 		
-		for (User u : users.values()) {
+		for (User u : db.getUsers().values()) {
 			if (u.getUsername().equals(myUser.getUsername())) {
 				System.out.println("Username already exists");
 				return Response.status(400).build();
 			}
 		}
 		
-		users.put(myUser.getUsername(), myUser);
-		loggedInUsers.put(myUser.getUsername(), myUser);
+		db.getUsers().put(myUser.getUsername(), myUser);
+		db.getLoggedInUsers().put(myUser.getUsername(), myUser);
 		System.out.println("User registered");
 		return Response.status(200).build();
 	}
@@ -116,10 +112,10 @@ public class ChatBean implements ChatRemote, ChatLocal {
 		System.out.println("\n\n-----------------------------------------------------------");
 		System.out.println("POGODIO LOGIN ENDPOINT");
 		
-		for (User u : users.values()) {
+		for (User u : db.getUsers().values()) {
 			if (u.getUsername().equals(myUser.getUsername()) && u.getPassword().equals(myUser.getPassword())) {
 				System.out.println("User logged in");
-				loggedInUsers.put(myUser.getUsername(), myUser);
+				db.getLoggedInUsers().put(myUser.getUsername(), myUser);
 				return Response.status(200).entity("OK").build();
 			}
 		}
@@ -138,8 +134,8 @@ public class ChatBean implements ChatRemote, ChatLocal {
 		List<String> usernames = new ArrayList<>();
 		System.out.println("\n\n-----------------------------------------------------------");
 		System.out.println("POGODIO GET ALL LOGGEDIN ENDPOINT");
-		System.out.println("BROJ LOGOVANIH KORISNIKA: " + loggedInUsers.size());
-		for (User u : loggedInUsers.values()) {
+		System.out.println("BROJ LOGOVANIH KORISNIKA: " + db.getLoggedInUsers().size());
+		for (User u : db.getLoggedInUsers().values()) {
 			System.out.println("Username: " + u.getUsername());
 			usernames.add(u.getUsername());
 		}
@@ -158,8 +154,8 @@ public class ChatBean implements ChatRemote, ChatLocal {
 		List<String> usernames = new ArrayList<>();
 		System.out.println("\n\n-----------------------------------------------------------");
 		System.out.println("POGODIO GET ALL REGISTERED ENDPOINT");
-		System.out.println("BROJ REGISTROVANIH KORISNIKA: " + users.size());
-		for (User u : users.values()) {
+		System.out.println("BROJ REGISTROVANIH KORISNIKA: " + db.getUsers().size());
+		for (User u : db.getUsers().values()) {
 			System.out.println("Username: " + u.getUsername());
 			usernames.add(u.getUsername());
 		}
@@ -178,7 +174,7 @@ public class ChatBean implements ChatRemote, ChatLocal {
 		System.out.println("POGODIO SEND TO ALL ENDPOINT");
 		
 		ArrayList<String> messageReceivers = new ArrayList<>();
-		for (User u : loggedInUsers.values()) {
+		for (User u : db.getLoggedInUsers().values()) {
 			messageReceivers.add(u.getUsername());
 		}
 		m.setReceivers(messageReceivers);
@@ -188,7 +184,7 @@ public class ChatBean implements ChatRemote, ChatLocal {
 		System.out.println("Message receivers: " + m.getReceivers());
 		System.out.println("Message uuid: " + m.getId());
 		
-		allMessages.put(m.getId(), m);
+		db.getAllMessages().put(m.getId(), m);
 		
 		ws.echoTextMessage(m.getContent());
 		return Response.status(200).entity("OK").build();
@@ -220,7 +216,12 @@ public class ChatBean implements ChatRemote, ChatLocal {
 		System.out.println("Message receivers: " + m.getReceivers());
 		System.out.println("Message uuid: " + m.getId());
 		
-		allMessages.put(m.getId(), m);
+		db.getAllMessages().put(m.getId(), m);
+		
+		
+		User u = db.getUsers().get(m.getReceivers().get(0));
+		System.out.println("OVDE PRODJE");
+		ws.privateTextMessage(m.getContent(), u.getUsername());
 		
 		return Response.status(200).entity("OK").build();
 	}
@@ -233,7 +234,7 @@ public class ChatBean implements ChatRemote, ChatLocal {
 		System.out.println("\n\n-----------------------------------------------------------");
 		System.out.println("POGODIO GET MESSAGES ENDPOINT");
 		
-		for(Message m : allMessages.values()) {
+		for(Message m : db.getAllMessages().values()) {
 			if (m.getReceivers().contains(username)) {
 				System.out.println("OD: " + m.getSender());
 				System.out.println("PORUKA: " + m.getContent());
@@ -252,41 +253,14 @@ public class ChatBean implements ChatRemote, ChatLocal {
 		System.out.println("\n\n-----------------------------------------------------------");
 		System.out.println("POGODIO LOGOUT ENDPOINT");
 		
-		for (User u : loggedInUsers.values()) {
+		for (User u : db.getLoggedInUsers().values()) {
 			if (u.getUsername().equals(myUser.getUsername())) {
-				loggedInUsers.remove(u.getUsername());
+				db.getLoggedInUsers().remove(u.getUsername());
 				return Response.status(200).entity("OK").build();
 			}
 		}
 		return Response.status(200).entity("OK").build();
 
-	}
-	
-	
-	
-
-	//UPDATE SESSION ID 
-	// NADJI BOLJI NACIN DA SPOJIS ULOGOVANOG KORISNIKA SA ODGOVARAJUCOM SESSIJOM
-	@POST
-	@Path("users/update_session_id/{username}")
-	@Consumes(MediaType.APPLICATION_JSON)
-	public Response updateSessionId (@PathParam("username") String username, MySession s) {
-		System.out.println("\n\n-----------------------------------------------------------");
-		System.out.println("POGODIO UPDATE SESSION ID ENDPOINT");
-		User myUser = new User();
-		for (User u : loggedInUsers.values()) {
-			if (u.getUsername().equals(username)) {
-				myUser = u;
-				break;
-			}
-		}
-		System.out.println("PROSLA SESIJA: " + myUser.getSessionId());
-		myUser.setSessionId(s.getId());
-		System.out.println("NOVA SESIJA: " + myUser.getSessionId());
-		loggedInUsers.replace(username, myUser);
-		
-		return Response.status(200).build();
-		
 	}
 	
 }

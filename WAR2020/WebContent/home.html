@@ -31,7 +31,7 @@ function uuidv4() {
 //*******************************
 
 let socket;
-let host = "ws://localhost:8080/WAR2020/ws";
+let host = "ws://localhost:8080/WAR2020/ws/";
 let username = '';
 let sessionId = '';
 
@@ -181,32 +181,16 @@ $(document).ready(function() {
 	});
 	
 	try {
-		socket = new WebSocket(host);
+		socket = new WebSocket(host + sessionStorage.getItem('username'));
 		console.log('connect: Socket Status: ' + socket.readyState);
+		console.log('Session opened with username: ' + sessionStorage.getItem('username'));
 		
 		socket.onopen = function() {
 			console.log('onopen: Socket Status: ' + socket.readyState + ' (open)');
 		}
 		
 		socket.onmessage = function(msg) {
-			if (msg.data.includes("ID_MOJE_SESIJE")) {
-				sessionId = msg.data.substr(14);
-				alert("ID moje sesije: " + sessionId);
-				
-				console.log('SESSIONO ID: ' + msg.data + "\nUSERNAME: " + username);
-				$.ajax({
-					url: "rest/chat/users/update_session_id/" + username,
-					type: "POST",
-					data: JSON.stringify({"id":sessionId}),
-					contentType: "application/json",
-					dataType: "json",
-					complete: function(data) {
-						console.log("Session id update successfull. \nUsername: " + username);
-					}
-				});
-				
-			}
-			
+			console.log('on message: ' + msg.data);
 		}
 		
 		socket.onclose = function() {
