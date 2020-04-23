@@ -1,11 +1,7 @@
 package ws;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 import javax.ejb.EJB;
 import javax.ejb.LocalBean;
@@ -24,8 +20,7 @@ import beans.ChatLocal;
 @ServerEndpoint("/ws/{username}")
 @LocalBean
 public class WSEndPoint {
-	static List<Session> sessions = new ArrayList<Session>();
-	static Map<String, Session> sessions1 = Collections.synchronizedMap(new HashMap<>());
+	static HashMap<String, Session> sessions = new HashMap<>();
 	
 	
 	@EJB
@@ -34,7 +29,7 @@ public class WSEndPoint {
 	// Kad se neko konektuje dodaj ga na spisak
 	@OnOpen
 	public void onOpen(@PathParam("username")String username, Session session) {
-		sessions1.put(username, session);
+		sessions.put(username, session);
 		// sessions.add(session);
 		System.out.println("\n\n-----------------------------------------------------------");
 		System.out.println("USERNAME IZ WS: " + username);
@@ -47,7 +42,7 @@ public class WSEndPoint {
 		System.out.println("\n\n-----------------------------------------------------------");
 		System.out.println("Chat bean returned: " + chat.test());
 		try {
-			for (Session s : sessions1.values()) {
+			for (Session s : sessions.values()) {
 				System.out.println("WSEndPoint: " + msg);
 				s.getBasicRemote().sendText(msg);
 			}
@@ -61,9 +56,9 @@ public class WSEndPoint {
 	public void privateTextMessage(String msg, String receiver) {
 		System.out.println("\n\n-----------------------------------------------------------");
 		System.out.println("PRIVATE MESSAGE FOR USER: "+ receiver + "\nMESSAGE: " + msg);
-			if (sessions1.containsKey(receiver)) {
+			if (sessions.containsKey(receiver)) {
 				try {
-					sessions1.get(receiver).getBasicRemote().sendText(msg);
+					sessions.get(receiver).getBasicRemote().sendText(msg);
 				} catch (IOException e){
 					e.printStackTrace();
 				}
@@ -93,12 +88,11 @@ public class WSEndPoint {
 	// Kad neko zatvori browser skloni ga iz liste sesija
 	@OnClose
 	public void close(@PathParam("username")String username, Session session) {
-		sessions.remove(session);
-		sessions1.remove(username);
+		sessions.remove(username);
 		System.out.println("\n\n-----------------------------------------------------------");
 		System.out.println("SESSION CLOSED. ID:  " + session.getId());
 		System.out.println("SESSION CLOSED FOR USER: "+ username + "\nLIST OF REMAINING ACTIVE USERS:");
-		for (String str : sessions1.keySet()) {
+		for (String str : sessions.keySet()) {
 			System.out.println(str);
 		}
 	}
@@ -106,11 +100,10 @@ public class WSEndPoint {
 	// Ako dodje do greske skloni ga iz liste sesija
 	@OnError
 	public void error(@PathParam("username")String username, Session session, Throwable t) {
-		sessions.remove(session);
-		sessions1.remove(username);
+		sessions.remove(username);
 		System.out.println("\n\n-----------------------------------------------------------");
 		System.out.println("SESSION ERROR FOR USER: "+ username + "\nLIST OF REMAINING ACTIVE USERS:");
-		for (String str : sessions1.keySet()) {
+		for (String str : sessions.keySet()) {
 			System.out.println(str);
 		}
 		t.printStackTrace();
