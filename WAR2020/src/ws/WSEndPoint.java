@@ -35,6 +35,16 @@ public class WSEndPoint {
 		System.out.println("USERNAME IZ WS: " + username);
 		System.out.println("SESSION ID: " + session.getId());
 		/*System.out.println("SESSION SIZE: " + sessions.size());*/
+		
+		// posalji poruku sa sadrzajem "addUser" da bi automatski front bio updateovan svima
+		try {
+			for (Session s : sessions.values()) {
+				System.out.println("Delete from logged in user list on frontend: " + username);
+				s.getBasicRemote().sendText("add123User:" + username);
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	@OnMessage
@@ -95,6 +105,16 @@ public class WSEndPoint {
 		for (String str : sessions.keySet()) {
 			System.out.println(str);
 		}
+		
+		// posalji poruku sa sadrzajem "deleteUser:username" da bi automatski front bio updateovan svima
+			try {
+				for (Session s : sessions.values()) {
+					System.out.println("Delete from logged in user list on frontend: " + username);
+					s.getBasicRemote().sendText("deleteUser:" + username);
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 	}
 	
 	// Ako dodje do greske skloni ga iz liste sesija
@@ -105,6 +125,16 @@ public class WSEndPoint {
 		System.out.println("SESSION ERROR FOR USER: "+ username + "\nLIST OF REMAINING ACTIVE USERS:");
 		for (String str : sessions.keySet()) {
 			System.out.println(str);
+		}
+		
+		// posalji poruku sa sadrzajem "deleteUser:username" da bi automatski front bio updateovan svima
+		try {
+			for (Session s : sessions.values()) {
+				System.out.println("Delete from logged in user list on frontend: " + username);
+				s.getBasicRemote().sendText("deleteUser:" + username);
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 		t.printStackTrace();
 	}

@@ -18,6 +18,56 @@
 	margin: 5px 0px 0px 5px;
 }
 
+/* Chat containers */
+.chatContainer {
+  border: 2px solid #dedede;
+  background-color: #f1f1f1;
+  border-radius: 5px;
+  padding: 10px;
+  margin: 10px 0;
+}
+
+/* Darker chat container */
+.darker {
+  border-color: #ccc;
+  background-color: #ddd;
+}
+
+/* Clear floats */
+.chatContainer::after {
+  content: "";
+  clear: both;
+  display: table;
+}
+
+/* Style images */
+.chatContainer img {
+  float: left;
+  max-width: 60px;
+  width: 100%;
+  margin-right: 20px;
+  border-radius: 50%;
+}
+
+/* Style the right image */
+.chatContainer img.right {
+  float: right;
+  margin-left: 20px;
+  margin-right:0;
+}
+
+/* Style time text */
+.time-right {
+  float: right;
+  color: #aaa;
+}
+
+/* Style time text */
+.time-left {
+  float: left;
+  color: #999;
+}
+
 </style>
 
 <script>
@@ -47,7 +97,7 @@ window.onload = function() {
 	alert("Logged in user: " + username);
 	
 	$.ajax({
-			url: "rest/chat/users/registered",
+			url: "rest/chat/users/loggedin",
 			type: "GET",
 			success: function(data) {
 				$('#selectUser').empty();
@@ -67,6 +117,8 @@ $(document).ready(function() {
 			alert('Message cannot be empty');
 			return;
 		}
+		
+		$('#divMsg').append('<div class="container darker"><p style="text-align: right;">'+username+':</p><p style="text-align: right;">'+msgText+'</p></div>');
 		
 		$.ajax({
 			url: "rest/chat/messages/all",
@@ -105,7 +157,8 @@ $(document).ready(function() {
 	});
 	
 	$('#btnRefreshRegistered').click(function() {
-		$.ajax({
+		alert('Refreshes automatically with websockets');
+		/*$.ajax({
 			url: "rest/chat/users/registered",
 			type: "GET",
 			success: function(data) {
@@ -116,7 +169,7 @@ $(document).ready(function() {
 				}
 				
 			}
-		});
+		});*/
 	});
 	
 	$('#btnLoggedIn').click(function() {
@@ -189,8 +242,26 @@ $(document).ready(function() {
 			console.log('onopen: Socket Status: ' + socket.readyState + ' (open)');
 		}
 		
+		// teoretski korisnici mogu medjusobno da se brisu
+		// ako posalju poruku deleteUser:neko_korisnicko_ime
+		// ali da se ne pravi poseban websocket za sad ostaje ova implementacija
 		socket.onmessage = function(msg) {
-			console.log('on message: ' + msg.data);
+			msgPrefix = msg.data.substring(0, 11);
+			if (msgPrefix === 'add123User:') {
+				msgUsername = msg.data.substring(11);
+				console.log('add user: ' + msgUsername + ' to active users list');
+				$('#selectUser').append(new Option(msgUsername, msgUsername));
+			}
+			else if (msgPrefix === 'deleteUser:') {
+				msgUsername = msg.data.substring(11);
+				console.log('delete user: ' + msgUsername + ' from active users list');
+				$('#selectUser option[value=' + msgUsername + ']').remove();
+			}
+			else {
+				console.log('on message: ' + msg.data);
+				$('#divMsg').append('<div class="container"><p>Other:</p><p>'+msg.data+'</p></div>');
+			}
+			
 		}
 		
 		socket.onclose = function() {
@@ -260,5 +331,11 @@ $(document).ready(function() {
 			<td align="right" colspan="2"><button id="btnLogout" class="btn btn-primary">Logout</button></td>
 		</tr>
 	</table>
+	
+	<div id="divMsg" style="height: 450px; width: auto; overflow: scroll; margin: 10px 100px 0px 100px; border-style: solid;
+		border-color: dodgerblue; border-width: medium;">
+		<h2>Messages:</h2><br />
+
+	</div>
 </body>
 </html>
