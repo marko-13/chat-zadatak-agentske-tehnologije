@@ -61,7 +61,7 @@ public class ChatBean implements ChatRemote, ChatLocal {
 		System.out.println("Received message: " + text);
 		
 		// OVA LINIJA MENJA ZAKOMENTARISANI JMS JER JE SAD WS USPESNO INJEKTOVAN
-		ws.echoTextMessage(text);
+		//ws.echoTextMessage(text);
 		
 		/*try {
 			QueueConnection connection = (QueueConnection) connectionFactory.createConnection("guest", "guest.guest.1");
@@ -186,7 +186,7 @@ public class ChatBean implements ChatRemote, ChatLocal {
 		
 		db.getAllMessages().put(m.getId(), m);
 		
-		ws.echoTextMessage(m.getContent());
+		ws.echoTextMessage(m.getId().toString());
 		return Response.status(200).entity("OK").build();
 		/*
 		try {
@@ -215,13 +215,15 @@ public class ChatBean implements ChatRemote, ChatLocal {
 		System.out.println("Message sender: " + m.getSender());
 		System.out.println("Message receivers: " + m.getReceivers());
 		System.out.println("Message uuid: " + m.getId());
+		System.out.println("Message subject: " + m.getSubject());
+		System.out.println("Message timestamp: " + m.getTimeStamp());
 		
 		db.getAllMessages().put(m.getId(), m);
 		
 		
-		User u = db.getUsers().get(m.getReceivers().get(0));
-		System.out.println("OVDE PRODJE");
-		ws.privateTextMessage(m.getContent(), u.getUsername());
+		//User u = db.getUsers().get(m.getReceivers().get(0));
+		//ws.privateTextMessage(m.getContent(), u.getUsername());
+		ws.echoTextMessage(m.getId().toString());
 		
 		return Response.status(200).entity("OK").build();
 	}

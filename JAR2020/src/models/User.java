@@ -9,7 +9,8 @@ public class User implements Serializable {
     private static final long serialVersionUID = 1L;
     private String username;
     private String password;
-    private ArrayList<UUID> messages;
+    private ArrayList<UUID> messages; // MOZDA MOZE I BEZ OVOGA
+    private Host host;
 
     public User () {
     	
@@ -20,10 +21,11 @@ public class User implements Serializable {
         this.password = password;
     }
     
-    public User(String username, String password, ArrayList<UUID> messages) {
+    public User(String username, String password, ArrayList<UUID> messages, Host host) {
         this.username = username;
         this.password = password;
         this.messages = messages;
+        this.host = host;
     }
     
     public String getUsername() {
@@ -49,10 +51,19 @@ public class User implements Serializable {
 	public void setMessages(ArrayList<UUID> messages) {
 		this.messages = messages;
 	}
+	
+
+	public Host getHost() {
+		return host;
+	}
+
+	public void setHost(Host host) {
+		this.host = host;
+	}
 
 	@Override
-    public String toString() {
-        return "User:" + username;
-    }
+	public String toString() {
+		return "User [username=" + username + ", host=" + host.getAddress() + "]";
+	}
 
 }

@@ -10,7 +10,7 @@
 
 <style>
 .btn {
-	margin: 5px 0px 0px 5px;
+	margin: 0px 0px 5px 5px;
 	width: 100%;
 }
 
@@ -79,6 +79,21 @@ function uuidv4() {
 	  )
 	}
 //*******************************
+//FUNKCIJA ZA PRETVARANJE TIMESTAMP U DATUM
+//*******************************
+function timeConverter(timestamp){
+  const a = new Date(timestamp * 1000);
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const year = a.getFullYear();
+  const month = months[a.getMonth()];
+  const date = a.getDate();
+  const hour = a.getHours();
+  const min = a.getMinutes();
+  const sec = a.getSeconds();
+  const time = date + ' ' + month + ' ' + year + ' ' + hour + ':' + min;
+  return time;
+}
+//*******************************
 
 let socket;
 let host = "ws://localhost:8080/WAR2020/ws/";
@@ -113,17 +128,24 @@ window.onload = function() {
 $(document).ready(function() {
 	$("#btnSend").click(function() {
 		const msgText = $("#msgText").val();
-		if (msgText === "" || msgText === undefined) {
-			alert('Message cannot be empty');
+		const msgSubject = $('#msgSubject').val();
+		if (msgText === "" || msgText === undefined || msgSubject === "" || msgSubject === undefined) {
+			alert('Subject and message cannot be empty');
 			return;
 		}
 		
-		$('#divMsg').append('<div class="container darker"><p style="text-align: right;">'+username+':</p><p style="text-align: right;">'+msgText+'</p></div>');
+		$('#divMsg').append('<div class="container darker"><h4 style="text-align: right;">You:</h4><h5 style="text-align: right;">'+msgSubject+'</h5><p style="text-align: right;">'+msgText+'</p><hr></div>');
 		
 		$.ajax({
 			url: "rest/chat/messages/all",
 			type: "POST",
-			data: JSON.stringify({"id": uuidv4(), "content":msgText, "sender":username, "receivers": []}),
+			data: JSON.stringify({"id": uuidv4(),
+								  "content":msgText,
+								  "sender":username,
+								  "receivers": [],
+								  "timeStamp": Date.now(),
+								  "subject":msgSubject,
+								  "category":0}),
 			contentType: "application/json",
 			dataType: "json",
 			complete: function(data) {
@@ -136,16 +158,26 @@ $(document).ready(function() {
 	$("#btnSendOne").click(function() {
 		const userUsername = $('#selectUser :selected').val();
 		const msgText = $("#msgText").val();
-		if (msgText === "" || msgText === undefined || userUsername === "Select user") {
-			alert('Message cannot be empty and user must be selected');
+		const msgSubject = $('#msgSubject').val();
+		if (msgText === "" || msgText === undefined || userUsername === "Select user" || msgSubject === "" || msgSubject === undefined) {
+			alert('Subject and message cannot be empty and user must be selected');
 			return;
 		}
+		
+		$('#divMsg').append('<div class="container darker"><h4 style="text-align: right;">You:</h4><h5 style="text-align: right;">'+msgSubject+'</h5><p style="text-align: right;">'+msgText+'</p><hr></div>');
+
 		const userArray = [];
 		userArray.push(userUsername);
 		$.ajax({
 			url: "rest/chat/messages/user",
 			type: "POST",
-			data: JSON.stringify({"id": uuidv4(), "content":msgText, "sender":username, "receivers": userArray}),
+			data: JSON.stringify({"id": uuidv4(),
+								  "content":msgText,
+								  "sender":username,
+								  "receivers": userArray,
+								  "timeStamp": Date.now(),
+								  "subject":msgSubject,
+								  "category":1}),
 			contentType: "application/json",
 			dataType: "json",
 			complete: function(data) {
@@ -242,15 +274,36 @@ $(document).ready(function() {
 			console.log('onopen: Socket Status: ' + socket.readyState + ' (open)');
 		}
 		
-		// teoretski korisnici mogu medjusobno da se brisu
+		// ISPRAVLJENO teoretski korisnici mogu medjusobno da se brisu
 		// ako posalju poruku deleteUser:neko_korisnicko_ime
 		// ali da se ne pravi poseban websocket za sad ostaje ova implementacija
 		socket.onmessage = function(msg) {
+			const msgObject = JSON.parse(msg.data);
+			alert(msgObject);
+			// received public message
+			if(msgObject.category === 0) {
+				$('#divMsg').append('<div class="container"><h4>From: '+msgObject.sender+'</h4><h5>Subject: '+msgObject.subject+'</h5><p>'+msgObject.content+'</p><hr></div>');
+			}
+			// received private message
+			else if(msgObject.category === 1){
+				$('#divMsg').append('<div class="container"><h4>From: '+msgObject.sender+'</h4><h5>Subject: '+msgObject.subject+'</h5><p>'+msgObject.content+'</p><hr></div>');
+			}
+			// add user to active users list
+			else if(msgObject.category === 2){
+				console.log('add user: ' + msgObject.content + ' to active users list');
+				$('#selectUser').append(new Option(msgObject.content, msgObject.content));
+			}
+			// remove user from active users list
+			else if(msgObject.category === 3){
+				console.log('delete user: ' + msgObject.content + ' from active users list');
+				$('#selectUser option[value=' + msgObject.content + ']').remove();
+			}
+			
+			/*
 			msgPrefix = msg.data.substring(0, 11);
 			if (msgPrefix === 'add123User:') {
 				msgUsername = msg.data.substring(11);
 				console.log('add user: ' + msgUsername + ' to active users list');
-				$('#selectUser').append(new Option(msgUsername, msgUsername));
 			}
 			else if (msgPrefix === 'deleteUser:') {
 				msgUsername = msg.data.substring(11);
@@ -260,7 +313,7 @@ $(document).ready(function() {
 			else {
 				console.log('on message: ' + msg.data);
 				$('#divMsg').append('<div class="container"><p>Other:</p><p>'+msg.data+'</p></div>');
-			}
+			}*/
 			
 		}
 		
@@ -285,14 +338,16 @@ $(document).ready(function() {
 	<table>
 		<tr>
 			<td valign="top"><label>Message: </label></td>
-			<td valign="top" rowspan="3"><textarea id="msgText" class="form-control" rows="5" cols="60" placeholder="message"></textarea></td>
+			<td valign="top"><input id="msgSubject" class="form-control" type="text" placeholder="subject"/></td>
 			<td valign="top"><button id="btnSend" class="btn btn-primary">Send to all users</button></td>
 			<td valign="top"><button id="btnSendOne" class="btn btn-primary">Send to one user</button></td>
 
 		</tr>
 		
 		<tr>
-			<td></td><td></td>
+			<td></td>
+			<td valign="top" rowspan="3"><textarea id="msgText" class="form-control" rows="5" cols="60" placeholder="message"></textarea></td>
+			<td></td>
 			<td><select id="selectUser" class="select form-control">
 					<option value="" disabled selected hidden="true">Please select user</option>
 				</select>

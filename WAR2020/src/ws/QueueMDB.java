@@ -20,7 +20,7 @@ public class QueueMDB implements MessageListener{
 		TextMessage tmsg = (TextMessage)msg;
 		try {
 			System.out.println("MDB: " + tmsg.getText());
-			ws.echoTextMessage(tmsg.getText());
+			//ws.echoTextMessage(tmsg.getText());
 		} catch (JMSException e) {
 			e.printStackTrace();
 		}
