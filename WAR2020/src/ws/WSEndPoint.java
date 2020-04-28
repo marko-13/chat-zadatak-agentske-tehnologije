@@ -30,7 +30,14 @@ import models.Message;
 public class WSEndPoint {
 	static HashMap<String, Session> sessions = new HashMap<>();
 	
-	
+	public static HashMap<String, Session> getSessions() {
+		return sessions;
+	}
+
+	public static void setSessions(HashMap<String, Session> sessions) {
+		WSEndPoint.sessions = sessions;
+	}
+
 	@EJB
 	ChatLocal chat;
 	

@@ -30,7 +30,9 @@ $(document).ready(function() {
 		$.ajax({
 			url: "rest/chat/users/login/",
 			type: "POST",
-			data: JSON.stringify({"username":username, "password":password}),
+			data: JSON.stringify({"username":username,
+								  "password":password,
+								  "messages": []}),
 			contentType: "application/json",
 			// dataType: "json",
 			success: function(data) {

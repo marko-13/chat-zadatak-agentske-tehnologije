@@ -1,4 +1,11 @@
 package beans;
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.InetAddress;
+import java.net.MalformedURLException;
+import java.net.ProtocolException;
+import java.net.URL;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -24,6 +31,10 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import org.jboss.resteasy.client.jaxrs.ResteasyClient;
+import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
+import org.jboss.resteasy.client.jaxrs.ResteasyWebTarget;
+
 import models.Message;
 import models.User;
 import ws.WSEndPoint;
@@ -32,6 +43,8 @@ import ws.WSEndPoint;
 @Path("/chat")
 @LocalBean
 public class ChatBean implements ChatRemote, ChatLocal {
+	
+	private static String PATH = "http://localhost:8080/rest/server/";
 	
 	@EJB
 	DBBean db;
@@ -52,6 +65,7 @@ public class ChatBean implements ChatRemote, ChatLocal {
 	@Path("/test")
 	@Produces(MediaType.TEXT_PLAIN)
 	public String test() {
+				
 		return "OK";
 	}
 	
@@ -86,6 +100,7 @@ public class ChatBean implements ChatRemote, ChatLocal {
 	@Consumes(MediaType.APPLICATION_JSON)
 	// @Produces(MediaType.APPLICATION_JSON)
 	public Response register(User myUser) {
+				
 		System.out.println("\n\n-----------------------------------------------------------");
 		System.out.println("POGODIO REGISTER ENDPOINT");
 		
@@ -95,6 +110,31 @@ public class ChatBean implements ChatRemote, ChatLocal {
 				return Response.status(400).build();
 			}
 		}
+		
+		
+		//****************************************************************************
+		InetAddress ip = null;
+		String hostName = "";
+		try {
+			ip = InetAddress.getLocalHost();
+			hostName = ip.getHostName();
+			System.out.println("IP address is: " + ip.getHostAddress());
+			System.out.println("Hostname is: " + hostName);
+			
+		} catch (UnknownHostException e) {
+			e.printStackTrace();
+			return Response.status(400).build();
+		}
+		
+		// ako nije na master cvoru proveri da li taj cvor postoji u cvorovima i dodaj ga ako ne
+		if (ip.getHostAddress().equals("192.168.1.10")) {
+			System.out.println("NOT ON MASTER NODE");
+			// ako cvor ne postoji u listi cvorova dodaj ga i izvrsi handshake
+			if (!db.getHosts().containsKey(ip.getHostAddress())) {
+				
+			}
+		}
+		//******************************************************************************
 		
 		db.getUsers().put(myUser.getUsername(), myUser);
 		db.getLoggedInUsers().put(myUser.getUsername(), myUser);
