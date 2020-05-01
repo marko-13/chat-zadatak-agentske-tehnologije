@@ -146,8 +146,9 @@ public class ServerBean {
 	
 	@POST
 	@Path("/newUser")
-	public Response newUser(@PathParam("alias") String alias, User myUser) {
-		System.out.println("ADD NEW USER TO NODE: " + alias);
+	@Consumes(MediaType.APPLICATION_JSON)
+	public Response newUser(User myUser) {
+		
 		db.getUsers().put(myUser.getUsername(), myUser);
 		db.getLoggedInUsers().put(myUser.getUsername(), myUser);
 		

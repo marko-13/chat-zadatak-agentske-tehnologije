@@ -117,6 +117,38 @@ public class WSEndPoint {
 			return;
 		}
 		// ako je kategorija 2 ili 3(dodaj i obrisi iz liste aktivnih korisnika) to se radi u onopen onclose
+		// treba i ovde zbog vise hostova koji ce ovako komunicirati
+		// dodaj
+		else if (myMessage.getCategory() == 2) {
+			
+			System.out.println("\n\n-----------------------------------------------------------");
+			System.out.println("ADD USER FROM ANOTHER HOST MESSAGE");
+			try {
+				for (Session s : sessions.values()) {
+					System.out.println("WSEndPoint: " + msgJSON);
+					s.getBasicRemote().sendText(msgJSON);
+	
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			return;
+		}
+		// obrisi
+		else if (myMessage.getCategory() == 3) {
+			System.out.println("\n\n-----------------------------------------------------------");
+			System.out.println("DELETE USER FROM ANOTHER HOST MESSAGE");
+			try {
+				for (Session s : sessions.values()) {
+					System.out.println("WSEndPoint: " + msgJSON);
+					s.getBasicRemote().sendText(msgJSON);
+	
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			return;
+		}
 		else {
 			System.out.println("\n\n-----------------------------------------------------------");
 			System.out.println("Category error in method ws.echoTextMessage");

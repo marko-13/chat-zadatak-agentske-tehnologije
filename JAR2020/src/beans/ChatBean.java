@@ -4,6 +4,7 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.UUID;
 
 //import javax.annotation.Resource;
 import javax.ejb.EJB;
@@ -121,16 +122,18 @@ public class ChatBean implements ChatRemote, ChatLocal {
 		db.getLoggedInUsers().put(myUser.getUsername(), myUser);
 		
 		for (Host h : db.getHosts().values()) {
-			String hostPath2 = "http://" + h.getAddress() + ":8080/WAR2020/rest/server/newUser/" + ip.getHostName();
+			if (h.getAddress().equals(ip.getHostAddress())) {
+				continue;
+			}
+			String hostPath = "http://" + h.getAddress() + ":8080/WAR2020/rest/server/newUser";
 			try {
 				ResteasyClient client = new ResteasyClientBuilder().build();
-				ResteasyWebTarget target = client.target(hostPath2);
-				Response res = target.request().post(Entity.entity(myUser, MediaType.APPLICATION_JSON));
-				Response ret = res.readEntity(Response.class);
+				ResteasyWebTarget target = client.target(hostPath);
+				Response res = target.request().post(Entity.entity(new User(myUser.getUsername(), myUser.getPassword(), null, ip.getHostAddress()), MediaType.APPLICATION_JSON));
 				System.out.println("ADDED USER ON ANOTHER HOST");
 			}
 			catch (Exception e) {
-				System.out.println("ERROR IN NODE DELETION");
+				System.out.println("ERROR IN REQUEST TO SEND NEW USER TO OTHER NODES");
 				return Response.status(400).build();
 			}
 		}
