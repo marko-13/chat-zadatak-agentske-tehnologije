@@ -25,6 +25,7 @@ import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
 import org.jboss.resteasy.client.jaxrs.ResteasyWebTarget;
 
 import models.Host;
+import models.Message;
 import models.User;
 import ws.WSEndPoint;
 
@@ -104,7 +105,7 @@ public class ServerBean {
 	@Path("/users/loggedin")
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Collection<User> sendAllLoggedInUsersToNewNode(Host newHost) {
-		System.out.println("ALL USERS ARE BEING SEND TO NEW NODE");
+		System.out.println("ALL USERS ARE BEING SENT TO NEW NODE");
 		
 		// .....
 		List<User> users = new ArrayList<>();
@@ -119,7 +120,8 @@ public class ServerBean {
 	@DELETE
 	@Path("/node/{alias}")
 	public String deleteNodeIfHandshakeHasFailed(@PathParam("alias")String alias) {
-		System.out.println("HANDSHAKE FAILED, DELETE NEW NODE FROM ALL LISTS");
+		System.out.println("HANDSHAKE FAILED OR NODE HEARTBEAT FAILED OR NODE WAS DELETED");
+		System.out.println("DELETE SAID NODE FROM ALL LISTS AND DELETE LOGGED IN USERS FROM THAT NODE");
 		
 		db.getHosts().remove(alias);
 		
@@ -139,6 +141,23 @@ public class ServerBean {
 	public String heartbeat() {
 		System.out.println("PERIODICNO PROVERAVAJ DA LI SU SVI CVOROVI AKTIVNI");
 		return "OK";
+	}
+	
+	
+	@POST
+	@Path("/newUser")
+	public Response newUser(@PathParam("alias") String alias, User myUser) {
+		System.out.println("ADD NEW USER TO NODE: " + alias);
+		db.getUsers().put(myUser.getUsername(), myUser);
+		db.getLoggedInUsers().put(myUser.getUsername(), myUser);
+		
+		// INFORM FRONTEND
+		// kategorija poruke za dodavanje
+		Message myMessage = new Message(myUser.getUsername(), 2);
+		db.getAllMessages().put(myMessage.getId(), myMessage);
+		ws.echoTextMessage(myMessage.getId().toString());
+		
+		return Response.status(200).build();
 	}
 	
 	@GET

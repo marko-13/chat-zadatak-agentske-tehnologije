@@ -32,6 +32,7 @@ public class HostManager {
 	private static final String MASTERIP = "192.168.1.10";
 	
 	private String myIP = "";
+	private String myAlias = "";
 	
 	@EJB
 	DBBean db;
@@ -55,6 +56,7 @@ public class HostManager {
 			return;
 		}
 		myIP = ip.getHostAddress();
+		myAlias = ip.getHostName();
 		
 		// Ako nije na master cvoru, uradi handshake
 		if (!ip.getHostAddress().equals(MASTERIP)) {
@@ -81,7 +83,7 @@ public class HostManager {
 				
 		// za svaki host pozovi brisanje cvora iz liste hosotva i obrisi i usere sa tog cvora
 		for (Host h : db.getHosts().values()) {
-			String hostPath = "http://" + h.getAddress() + ":8080/WAR2020/rest/server/node/" + myIP;
+			String hostPath = "http://" + h.getAddress() + ":8080/WAR2020/rest/server/node/" + myAlias;
 			
 			try {
 				ResteasyClient client = new ResteasyClientBuilder().build();
@@ -91,7 +93,7 @@ public class HostManager {
 				System.out.println("DELETE HOST RET: " + ret);
 			}
 			catch (Exception e) {
-				System.out.println("ERROR NODE DELETION");
+				System.out.println("ERROR IN NODE DELETION");
 				return;
 			}
 		}
@@ -179,7 +181,22 @@ public class HostManager {
 						System.out.println("HEARTBEAT: " + ret);
 					}
 					catch (Exception e1){
-						System.out.println("DELETE THIS NODE...");
+						System.out.println("DELETE THIS NODE..." + h.getAlias());
+						for (Host h2 : db.getHosts().values()) {
+							String hostPath2 = "http://" + h2.getAddress() + ":8080/WAR2020/rest/server/node/" + myAlias;
+							
+							try {
+								ResteasyClient client = new ResteasyClientBuilder().build();
+								ResteasyWebTarget target = client.target(hostPath2);
+								Response res = target.request().delete();
+								String ret = res.readEntity(String.class);
+								System.out.println("DELETE HOST RET: " + ret);
+							}
+							catch (Exception e2) {
+								System.out.println("ERROR IN NODE DELETION");
+								return;
+							}
+						}
 					}
 				}
 			}

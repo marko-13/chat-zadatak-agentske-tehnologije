@@ -33,7 +33,7 @@ public class Message implements Serializable {
 	
 	public Message(String content, int category) {
 		super();
-		this.id = null;
+		this.id = UUID.randomUUID();
 		this.content = content;
 		this.sender = "";
 		this.receivers = null;

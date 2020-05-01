@@ -23,9 +23,15 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import org.jboss.resteasy.client.jaxrs.ResteasyClient;
+import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
+import org.jboss.resteasy.client.jaxrs.ResteasyWebTarget;
+
+import models.Host;
 import models.Message;
 import models.User;
 import ws.WSEndPoint;
@@ -113,6 +119,22 @@ public class ChatBean implements ChatRemote, ChatLocal {
 		myUser.setHost(ip.getHostAddress());
 		db.getUsers().put(myUser.getUsername(), myUser);
 		db.getLoggedInUsers().put(myUser.getUsername(), myUser);
+		
+		for (Host h : db.getHosts().values()) {
+			String hostPath2 = "http://" + h.getAddress() + ":8080/WAR2020/rest/server/newUser/" + ip.getHostName();
+			try {
+				ResteasyClient client = new ResteasyClientBuilder().build();
+				ResteasyWebTarget target = client.target(hostPath2);
+				Response res = target.request().post(Entity.entity(myUser, MediaType.APPLICATION_JSON));
+				Response ret = res.readEntity(Response.class);
+				System.out.println("ADDED USER ON ANOTHER HOST");
+			}
+			catch (Exception e) {
+				System.out.println("ERROR IN NODE DELETION");
+				return Response.status(400).build();
+			}
+		}
+		
 		System.out.println("User registered");
 		return Response.status(200).build();
 	}
