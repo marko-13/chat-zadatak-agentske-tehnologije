@@ -45,6 +45,7 @@ import ws.WSEndPoint;
 public class ChatBean implements ChatRemote, ChatLocal {
 	
 	private static String PATH = "http://localhost:8080/rest/server/";
+	private static String MASTERIP = "192.168.1.10";
 	
 	@EJB
 	DBBean db;
@@ -127,7 +128,7 @@ public class ChatBean implements ChatRemote, ChatLocal {
 		}
 		
 		// ako nije na master cvoru proveri da li taj cvor postoji u cvorovima i dodaj ga ako ne
-		if (ip.getHostAddress().equals("192.168.1.10")) {
+		if (!ip.getHostAddress().equals(MASTERIP)) {
 			System.out.println("NOT ON MASTER NODE");
 			// ako cvor ne postoji u listi cvorova dodaj ga i izvrsi handshake
 			if (!db.getHosts().containsKey(ip.getHostAddress())) {
