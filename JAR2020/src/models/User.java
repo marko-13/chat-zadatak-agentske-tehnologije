@@ -10,7 +10,7 @@ public class User implements Serializable {
     private String username;
     private String password;
     private ArrayList<UUID> messages; // MOZDA MOZE I BEZ OVOGA
-    private Host host;
+    private String hostIP;
 
     public User () {
     	
@@ -21,11 +21,11 @@ public class User implements Serializable {
         this.password = password;
     }
     
-    public User(String username, String password, ArrayList<UUID> messages, Host host) {
+    public User(String username, String password, ArrayList<UUID> messages, String hostIP) {
         this.username = username;
         this.password = password;
         this.messages = messages;
-        this.host = host;
+        this.hostIP = hostIP;
     }
     
     public String getUsername() {
@@ -53,17 +53,17 @@ public class User implements Serializable {
 	}
 	
 
-	public Host getHost() {
-		return host;
+	public String getHost() {
+		return hostIP;
 	}
 
-	public void setHost(Host host) {
-		this.host = host;
+	public void setHost(String hostIP) {
+		this.hostIP = hostIP;
 	}
 
 	@Override
 	public String toString() {
-		return "User [username=" + username + ", host=" + host.getAddress() + "]";
+		return "User [username=" + username + ", host=" + hostIP + "]";
 	}
 
 }

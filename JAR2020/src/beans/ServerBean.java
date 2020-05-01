@@ -16,16 +16,10 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-import org.jboss.resteasy.client.jaxrs.ResteasyClient;
-import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
-import org.jboss.resteasy.client.jaxrs.ResteasyWebTarget;
-
 import models.Host;
-import models.Message;
 import models.User;
 import ws.WSEndPoint;
 
@@ -109,6 +103,14 @@ public class ServerBean {
 		System.out.println("AKO JE HANDSHAKE BIO NEUSPESAN, OBRISI NOVI CVOR KOJI JE PROBAO DA SE DODA IZ SVIH LISTI");
 		
 		db.getHosts().remove(alias);
+		
+		for (User u : db.getLoggedInUsers().values()) {
+			if (u.getHost().equals(alias)) {
+				System.out.println("REMOVING USERS: " + u.getUsername());
+				db.getLoggedInUsers().remove(u.getUsername());
+			}
+		}
+		System.out.println("BECAUSE HOST WAS STOPPED");
 		
 		return "OK";
 	}

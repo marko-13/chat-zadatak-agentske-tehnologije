@@ -1,15 +1,10 @@
 package beans;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.UUID;
 
-import javax.annotation.PostConstruct;
-import javax.ejb.EJB;
 import javax.ejb.LocalBean;
 import javax.ejb.Singleton;
-import javax.ejb.Startup;
 
 import models.Host;
 import models.Message;
@@ -25,25 +20,10 @@ public class DBBean {
 	private HashMap<String, Host> hosts = new HashMap<>();
 	
 	public DBBean() {
-		//System.out.println("\n\nDB BEAN INSTANTIATED\n");
 		users = new HashMap<String, User>();
 		loggedInUsers = new HashMap<String, User>(); 
 		allMessages = new HashMap<UUID, Message>();
-		// inicijalno napravi da je host racunar desktop na kom si
-		// kasnije stavi pravu ip adresu 192.168.1.10
 		hosts = new HashMap<String, Host>();
-		/*InetAddress ip = null;
-		String hostName = "";
-		try {
-			ip = InetAddress.getLocalHost();
-			hostName = ip.getHostName();
-			System.out.println("IP address is: " + ip.getHostAddress());
-			System.out.println("Hostname is: " + hostName);
-			
-		} catch (UnknownHostException e) {
-			e.printStackTrace();
-		}*/
-		//hosts.put("192.168.1.10", new Host("DesktopMaster", "192.168.1.10", true));
 	}
 	
 
