@@ -31,6 +31,7 @@ import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
 import org.jboss.resteasy.client.jaxrs.ResteasyWebTarget;
 
 import models.Host;
+import models.User;
 import ws.WSEndPoint;
 
 @Singleton
@@ -123,11 +124,30 @@ public class HostManager {
 			Host[] ret = res.readEntity(Host[].class);
 			
 			for (Host h : ret) {
-				System.out.println("IME: " + h.getAlias());
+				System.out.println("IME: " + h.getAlias() + "\nIP: " + h.getAddress());
+				db.getHosts().put(h.getAlias(), h);
 			}
 		}
 		catch (Exception e) {
 			System.out.println("ERROR IN STEP 3");
+			return false;
+		}
+		
+		// STEP 4
+		// Novi cvor pita master za spisak svih ulogovanih korisnika i master mu u odgovoru salje
+		try {
+			ResteasyClient client = new ResteasyClientBuilder().build();
+			ResteasyWebTarget target = client.target(PATH+ "users/loggedin");
+			Response res = target.request(MediaType.APPLICATION_JSON).post(Entity.entity(new Host(newHost.getAlias(), newHost.getAddress(), false), MediaType.APPLICATION_JSON));
+			User[] ret = res.readEntity(User[].class);
+			
+			for (User u : ret) {
+				System.out.println("USERNAME: " + u.getUsername());
+				db.getLoggedInUsers().put(u.getUsername(), u);
+			}
+		}
+		catch (Exception e) {
+			System.out.println("ERROR IN STEP 4");
 			return false;
 		}
 		
