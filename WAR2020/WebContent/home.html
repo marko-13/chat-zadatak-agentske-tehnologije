@@ -96,13 +96,14 @@ function timeConverter(timestamp){
 //*******************************
 
 let socket;
-let host = "ws://localhost:8080/WAR2020/ws/";
+//let host = "ws://localhost:8080/WAR2020/ws/";
+let host = "ws://" + window.location.host + "/WAR2020/ws/";
 let username = '';
 let sessionId = '';
 
 
 
-window.onload = function() {
+window.onload = function() {	
 	username = sessionStorage.getItem('username');
 	$('#welcomeId').append(", " + username);
 	if (username === null) {

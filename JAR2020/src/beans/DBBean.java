@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.UUID;
 
 import javax.annotation.PostConstruct;
+import javax.ejb.EJB;
 import javax.ejb.LocalBean;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
@@ -24,7 +25,7 @@ public class DBBean {
 	private HashMap<String, Host> hosts = new HashMap<>();
 	
 	public DBBean() {
-		System.out.println("\n\nDB BEAN INSTANTIATED\n\n");
+		//System.out.println("\n\nDB BEAN INSTANTIATED\n");
 		users = new HashMap<String, User>();
 		loggedInUsers = new HashMap<String, User>(); 
 		allMessages = new HashMap<UUID, Message>();
@@ -42,16 +43,9 @@ public class DBBean {
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 		}*/
-		hosts.put("192.168.1.10", new Host("DesktopMaster", "192.168.1.10", true));
+		//hosts.put("192.168.1.10", new Host("DesktopMaster", "192.168.1.10", true));
 	}
 	
-	
-	/*@PostConstruct
-	public void nodeInit() {
-		System.out.println("\n\nSTARTUP\n\n");
-		
-		DBBean db = new DBBean();
-	}*/
 
 	public HashMap<String, User> getUsers() {
 		return users;
@@ -78,6 +72,26 @@ public class DBBean {
 	public String toString() {
 		return "DBBean [users=" + users + ", loggedInUsers=" + loggedInUsers + ", allMessages=" + allMessages
 				+ ", hosts=" + hosts + "]";
+	}
+	
+	public String ispisSvega() {
+		String korisnici = "REGISTROVANI KORISNICI:\n";
+		for (User u : users.values()) {
+			korisnici += u.getUsername() + "\n";
+		}
+		
+		String korisnici2 = "AKTIVNI KORISNICI:\n";
+		for (User u : loggedInUsers.values()) {
+			korisnici2 += u.getUsername() + "\n";
+		}
+		
+		String cvorovi = "CVOROVI:\n";
+		for (Host h : hosts.values()) {
+			cvorovi += h.getAlias() + "\n";
+		}
+		
+		return "PODACI U DB beanu:\n" + korisnici + korisnici2 + cvorovi;
+		
 	}
 
 }

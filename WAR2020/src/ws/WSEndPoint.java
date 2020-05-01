@@ -25,7 +25,7 @@ import models.Message;
 
 
 @Singleton
-@ServerEndpoint(value="/ws/{username}")
+@ServerEndpoint("/ws/{username}")
 @LocalBean
 public class WSEndPoint {
 	static HashMap<String, Session> sessions = new HashMap<>();
