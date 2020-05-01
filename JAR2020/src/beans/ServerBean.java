@@ -16,8 +16,13 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+
+import org.jboss.resteasy.client.jaxrs.ResteasyClient;
+import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
+import org.jboss.resteasy.client.jaxrs.ResteasyWebTarget;
 
 import models.Host;
 import models.User;
@@ -42,18 +47,31 @@ public class ServerBean {
 		return "OK";
 	}
 	
+	
+	// NOVI CVOR SE JAVLJA MASTERU I MASTER GA DODAJE U LISTU HOSTOVA
 	@POST
 	@Path("/register")
 	@Consumes(MediaType.APPLICATION_JSON)
 	public String registerNewNode(Host newHost) {
 		System.out.println("\n\nREGISTRUJE NOVI CVOR:\nAdresa: " + newHost.getAddress() + "\nAlias: " + newHost.getAlias());
 		
-		db.getHosts().put(newHost.getAlias(), newHost);
 		
+		// prodji kroz sve cvorove i javi im da dodaju novi cvor u svoje liste
+		for (Host h: db.getHosts().values()) {
+			System.out.println("MASTER OBAVESTAVA CVOR: " + h.getAddress());
+			String hostPath = "http://" + h.getAddress() + ":8080/WAR2020/rest/server/node/";
+			ResteasyClient client = new ResteasyClientBuilder().build();
+			ResteasyWebTarget target = client.target(hostPath);
+			Response res = target.request(MediaType.APPLICATION_JSON).post(Entity.entity(new Host(newHost.getAlias(), newHost.getAddress(), false), MediaType.APPLICATION_JSON));
+			String ret = res.readEntity(String.class);
+		}
+		db.getHosts().put(newHost.getAlias(), newHost);
+
 		return "Master covr dobio podatke o novom cvoru i dodao ga u listu cvorova";		
 	}
+	 
 	
-
+	
 	@POST
 	@Path("/node")
 	@Consumes(MediaType.APPLICATION_JSON)
