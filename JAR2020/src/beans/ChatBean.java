@@ -4,7 +4,6 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.UUID;
 
 //import javax.annotation.Resource;
 import javax.ejb.EJB;
@@ -335,36 +334,34 @@ public class ChatBean implements ChatRemote, ChatLocal {
 		for (User u : db.getLoggedInUsers().values()) {
 			if (u.getUsername().equals(myUser.getUsername())) {
 				db.getLoggedInUsers().remove(u.getUsername());
+				
+				//Obavesti i ostale hostove
+				InetAddress ip = null;
+				try {
+					ip = InetAddress.getLocalHost();
+					System.out.println("New servers IP address: " + ip.getHostAddress());
+					System.out.println("New servers host name: " + ip.getHostName());
+					
+				} catch (UnknownHostException e) {
+					e.printStackTrace();
+					return Response.status(400).entity("IP address error").build();
+				}
+				
+				for (Host h : db.getHosts().values()) {
+					System.out.println(h.getAddress());
+					String hostPath = "http://" + h.getAddress() + ":8080/WAR2020/rest/server/logoutUser";
+					try {
+						ResteasyClient client = new ResteasyClientBuilder().build();
+						ResteasyWebTarget target = client.target(hostPath);
+						Response res = target.request().post(Entity.entity(new User(myUser.getUsername(), myUser.getPassword(), null, ip.getHostAddress()), MediaType.APPLICATION_JSON));
+						System.out.println("DELETED USER FROM ANOTHER HOST");
+					}
+					catch (Exception e) {
+						System.out.println("ERROR IN REQUEST TO DELETE INACTIVE USER FROM OTHER NODES");
+						return Response.status(400).build();
+					}
+				}
 				return Response.status(200).entity("OK").build();
-			}
-		}
-		
-		//Obavesti i ostale hostove
-		InetAddress ip = null;
-		try {
-			ip = InetAddress.getLocalHost();
-			System.out.println("New servers IP address: " + ip.getHostAddress());
-			System.out.println("New servers host name: " + ip.getHostName());
-			
-		} catch (UnknownHostException e) {
-			e.printStackTrace();
-			return Response.status(400).entity("IP address error").build();
-		}
-		
-		for (Host h : db.getHosts().values()) {
-			if (h.getAddress().equals(ip.getHostAddress())) {
-				continue;
-			}
-			String hostPath = "http://" + h.getAddress() + ":8080/WAR2020/rest/server/logoutUser";
-			try {
-				ResteasyClient client = new ResteasyClientBuilder().build();
-				ResteasyWebTarget target = client.target(hostPath);
-				Response res = target.request().post(Entity.entity(new User(myUser.getUsername(), myUser.getPassword(), null, ip.getHostAddress()), MediaType.APPLICATION_JSON));
-				System.out.println("DELETED USER FROM ANOTHER HOST");
-			}
-			catch (Exception e) {
-				System.out.println("ERROR IN REQUEST TO DELETE INACTIVE USER FROM OTHER NODES");
-				return Response.status(400).build();
 			}
 		}
 		

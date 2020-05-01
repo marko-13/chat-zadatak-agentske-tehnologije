@@ -167,7 +167,7 @@ public class ServerBean {
 	@Path("/logoutUser")
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response logoutUser(User myUser) {
-		
+		System.out.println("UDJE OVDE U DELETE ON LOGOUT");
 		db.getLoggedInUsers().remove(myUser.getUsername());
 		
 		// INFORM FRONTEND
