@@ -1,6 +1,9 @@
 package beans;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 import javax.ejb.EJB;
 import javax.ejb.LocalBean;
@@ -13,11 +16,17 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import org.jboss.resteasy.client.jaxrs.ResteasyClient;
+import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
+import org.jboss.resteasy.client.jaxrs.ResteasyWebTarget;
+
 import models.Host;
 import models.Message;
+import models.User;
 import ws.WSEndPoint;
 
 @Stateless
@@ -31,17 +40,38 @@ public class ServerBean {
 	@EJB
 	WSEndPoint ws;
 	
+	@GET
+	@Path("/test")
+	public String test() {
+		System.out.println("UDJE U TEST");
+		
+		return "OK";
+	}
+	
 	@POST
 	@Path("/register")
 	@Consumes(MediaType.APPLICATION_JSON)
 	public String registerNewNode(Host newHost) {
-		System.out.println("\n\nREGISTRUJE NOVI CVOR\n\n");
+		System.out.println("\n\nREGISTRUJE NOVI CVOR:\nAdresa: " + newHost.getAddress() + "\nAlias: " + newHost.getAlias());
 		
 		db.getHosts().put(newHost.getAlias(), newHost);
 		
 		return "Master covr dobio podatke o novom cvoru i dodao ga u listu cvorova";		
 	}
 	
+	@POST
+	@Path("/triggermaster")
+	@Consumes(MediaType.APPLICATION_JSON)
+	public String triggerMaster(Host newHost) {
+		for (Host h : db.getHosts().values()) {
+			ResteasyClient client = new ResteasyClientBuilder().build();
+			ResteasyWebTarget target = client.target("http://"+h.getAddress()+":8080/WAR2020/rest/server/node");
+			Response res = target.request(MediaType.APPLICATION_JSON).post(Entity.entity(new Host(newHost.getAlias(), newHost.getAddress(), false), MediaType.APPLICATION_JSON));
+			String ret = res.readEntity(String.class);
+		}
+		
+		return "Master obavestio ostale cvorove o postojanju novog cvora";
+	}
 	
 	@POST
 	@Path("/node")
@@ -56,13 +86,18 @@ public class ServerBean {
 	
 	@POST
 	@Path("/nodes")
-	@Consumes(MediaType.TEXT_PLAIN)
-	public String informNewNodeAboutAllExistingNodes(String pod) {
+	@Produces(MediaType.APPLICATION_JSON)
+	public Collection<Host> informNewNodeAboutAllExistingNodes(Host newHost) {
 		System.out.println("MASTER CVOR SALJE NOVOM CVORU SVE NEMASTER CVOROVE KOJI POSTOJE");
 		
 		// .....
-		
-		return "OK";
+		List<Host> hosts = new ArrayList<>();
+		for (Host h : db.getHosts().values()) {
+			System.out.println("Host: " + h.getAlias());
+			hosts.add(h);
+		}
+		Collection<Host> myHosts = hosts;
+		return myHosts;
 	}
 	
 	@POST
