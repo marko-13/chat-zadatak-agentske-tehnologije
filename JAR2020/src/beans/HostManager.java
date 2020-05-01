@@ -103,7 +103,7 @@ public class HostManager {
 		// STEP 2
 		// Trigger master
 		// Master cvor treba da javi svim ostalim cvorovima o postojanju novog cvora da bi ga oni dodali u listu
-		try {
+		/*try {
 			ResteasyClient client = new ResteasyClientBuilder().build();
 			ResteasyWebTarget target = client.target(PATH+ "triggermaster");
 			Response res = target.request(MediaType.APPLICATION_JSON).post(Entity.entity(new Host(newHost.getAlias(), newHost.getAddress(), false), MediaType.APPLICATION_JSON));
@@ -112,7 +112,8 @@ public class HostManager {
 		catch (Exception e) {
 			System.out.println("ERROR IN STEP 2");
 			return false;
-		}
+		}*/
+		
 		
 		// STEP 3
 		// Novi cvor pita master cvor za spisak svih cvorova i master mu u odgovoru salje
@@ -123,7 +124,7 @@ public class HostManager {
 			Host[] ret = res.readEntity(Host[].class);
 			
 			for (Host h : ret) {
-				System.out.println("IME: " + h.getAlias());
+				System.out.println("IME: " + h.getAlias() + "\nIP: " + h.getAddress());
 			}
 		}
 		catch (Exception e) {
