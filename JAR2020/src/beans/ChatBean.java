@@ -121,6 +121,7 @@ public class ChatBean implements ChatRemote, ChatLocal {
 		db.getUsers().put(myUser.getUsername(), myUser);
 		db.getLoggedInUsers().put(myUser.getUsername(), myUser);
 		
+		// PROSLEDI I OSTALIM HOSTOVIMA PODATAK O NOVOM KORISNIKU
 		for (Host h : db.getHosts().values()) {
 			if (h.getAddress().equals(ip.getHostAddress())) {
 				continue;
@@ -169,6 +170,26 @@ public class ChatBean implements ChatRemote, ChatLocal {
 
 				myUser.setHost(ip.getHostAddress());
 				db.getLoggedInUsers().put(myUser.getUsername(), myUser);
+				
+				
+				// PROSLEDI I OSTALIM HOSTOVIMA PODATAK O NOVOM KORISNIKU
+				for (Host h : db.getHosts().values()) {
+					if (h.getAddress().equals(ip.getHostAddress())) {
+						continue;
+					}
+					String hostPath = "http://" + h.getAddress() + ":8080/WAR2020/rest/server/newUser";
+					try {
+						ResteasyClient client = new ResteasyClientBuilder().build();
+						ResteasyWebTarget target = client.target(hostPath);
+						Response res = target.request().post(Entity.entity(new User(myUser.getUsername(), myUser.getPassword(), null, ip.getHostAddress()), MediaType.APPLICATION_JSON));
+						System.out.println("ADDED USER ON ANOTHER HOST");
+					}
+					catch (Exception e) {
+						System.out.println("ERROR IN REQUEST TO SEND NEW USER TO OTHER NODES");
+						return Response.status(400).build();
+					}
+				}
+				
 				return Response.status(200).entity("OK").build();
 			}
 		}
@@ -178,6 +199,7 @@ public class ChatBean implements ChatRemote, ChatLocal {
 	}
 	
 	
+	// prodji kroz sve ostale hostove, NE MORA SVUDA PROSLEDJUJEM USERA KAD SE LOGUJE PA SU SVE LISTE AZURNE
 	// GET ALL LOGGED IN USERS
 	@GET
 	@Path("users/loggedin")
@@ -197,7 +219,7 @@ public class ChatBean implements ChatRemote, ChatLocal {
 		
 	}
 	
-	
+	// prodji kroz sve ostale hostove, NE MORA SVUDA PROSLEDJUEJM USERA KAD SE REGISTRUJE PA SU SVE LISTE AZURNE
 	// GET ALL REGISTERED USERS
 	@GET
 	@Path("users/registered")
@@ -218,6 +240,7 @@ public class ChatBean implements ChatRemote, ChatLocal {
 	}
 
 	
+	//prodji kroz sve ostale hostove
 	// SEND MESSAGE TO ALL LOGGED IN USERS
 	@POST
 	@Path("/messages/all")
@@ -257,6 +280,7 @@ public class ChatBean implements ChatRemote, ChatLocal {
 	}
 	
 	
+	// prodji kroz sve ostale hostove
 	// SEND MESSAGE TO ONE SPECIFIC USER
 	@POST
 	@Path("/messages/user")
@@ -314,6 +338,36 @@ public class ChatBean implements ChatRemote, ChatLocal {
 				return Response.status(200).entity("OK").build();
 			}
 		}
+		
+		//Obavesti i ostale hostove
+		InetAddress ip = null;
+		try {
+			ip = InetAddress.getLocalHost();
+			System.out.println("New servers IP address: " + ip.getHostAddress());
+			System.out.println("New servers host name: " + ip.getHostName());
+			
+		} catch (UnknownHostException e) {
+			e.printStackTrace();
+			return Response.status(400).entity("IP address error").build();
+		}
+		
+		for (Host h : db.getHosts().values()) {
+			if (h.getAddress().equals(ip.getHostAddress())) {
+				continue;
+			}
+			String hostPath = "http://" + h.getAddress() + ":8080/WAR2020/rest/server/logoutUser";
+			try {
+				ResteasyClient client = new ResteasyClientBuilder().build();
+				ResteasyWebTarget target = client.target(hostPath);
+				Response res = target.request().post(Entity.entity(new User(myUser.getUsername(), myUser.getPassword(), null, ip.getHostAddress()), MediaType.APPLICATION_JSON));
+				System.out.println("DELETED USER FROM ANOTHER HOST");
+			}
+			catch (Exception e) {
+				System.out.println("ERROR IN REQUEST TO DELETE INACTIVE USER FROM OTHER NODES");
+				return Response.status(400).build();
+			}
+		}
+		
 		return Response.status(200).entity("OK").build();
 
 	}

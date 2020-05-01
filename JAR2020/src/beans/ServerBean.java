@@ -144,6 +144,7 @@ public class ServerBean {
 	}
 	
 	
+	// kad se neko registruje/loguje treba javiti i ostalim hostovima da azuriraju svoje liste
 	@POST
 	@Path("/newUser")
 	@Consumes(MediaType.APPLICATION_JSON)
@@ -160,6 +161,24 @@ public class ServerBean {
 		
 		return Response.status(200).build();
 	}
+	
+	//kad se neko logoutuje treba javiti i ostalim hostovima da azuriraju svoje liste
+	@POST
+	@Path("/logoutUser")
+	@Consumes(MediaType.APPLICATION_JSON)
+	public Response logoutUser(User myUser) {
+		
+		db.getLoggedInUsers().remove(myUser.getUsername());
+		
+		// INFORM FRONTEND
+		// kategorija poruke za brisanje
+		Message myMessage = new Message(myUser.getUsername(), 3);
+		db.getAllMessages().put(myMessage.getId(), myMessage);
+		ws.echoTextMessage(myMessage.getId().toString());
+		
+		return Response.status(200).build();
+	}
+	
 	
 	@GET
 	@Path("/message")
