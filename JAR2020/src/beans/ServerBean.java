@@ -53,21 +53,22 @@ public class ServerBean {
 	@Path("/register")
 	@Consumes(MediaType.APPLICATION_JSON)
 	public String registerNewNode(Host newHost) {
-		System.out.println("\n\nREGISTRUJE NOVI CVOR:\nAdresa: " + newHost.getAddress() + "\nAlias: " + newHost.getAlias());
+		System.out.println("\n\nMASTER REGISTERING NEW NODE:\nAddress: " + newHost.getAddress() + "\nAlias: " + newHost.getAlias());
 		
 		
 		// prodji kroz sve cvorove i javi im da dodaju novi cvor u svoje liste
 		for (Host h: db.getHosts().values()) {
-			System.out.println("MASTER OBAVESTAVA CVOR: " + h.getAddress());
+			System.out.println("MASTER INFORMING NODE: " + h.getAddress() + "TO ADD NEW NODE TO HOSTS LIST");
 			String hostPath = "http://" + h.getAddress() + ":8080/WAR2020/rest/server/node/";
 			ResteasyClient client = new ResteasyClientBuilder().build();
 			ResteasyWebTarget target = client.target(hostPath);
 			Response res = target.request(MediaType.APPLICATION_JSON).post(Entity.entity(new Host(newHost.getAlias(), newHost.getAddress(), false), MediaType.APPLICATION_JSON));
 			String ret = res.readEntity(String.class);
+			System.out.println(ret);
 		}
 		db.getHosts().put(newHost.getAlias(), newHost);
 
-		return "Master covr dobio podatke o novom cvoru i dodao ga u listu cvorova";		
+		return "MASTER ADDED NEW NODE AND PASSED IT TO ALL OTHER HOSTS";
 	}
 	 
 	
@@ -76,18 +77,18 @@ public class ServerBean {
 	@Path("/node")
 	@Consumes(MediaType.APPLICATION_JSON)
 	public String informNodesAboutNewNode(Host newHost) {
-		System.out.println("\n\nMASTER CVOR JAVLJA OSTALIM NEMASTER CVOROVIMA O DOLASKU NOVOG CVORA");
+		System.out.println("\n\nMASTER INFORMED YOU ABOUT NEW NODE, ADDING TO THE LIST OF HOSTS NOW");
 		
 		db.getHosts().put(newHost.getAlias(), newHost);
 		
-		return "Nemaster cvor dobio podatke o novom cvoru od mastera i dodao ga u listu cvorova";
+		return "NEW NODE ADDED TO THE LIST OF HOSTS";
 	}
 	
 	@POST
 	@Path("/nodes")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Collection<Host> informNewNodeAboutAllExistingNodes(Host newHost) {
-		System.out.println("MASTER CVOR SALJE NOVOM CVORU SVE NEMASTER CVOROVE KOJI POSTOJE");
+		System.out.println("MASTER NODE IS INFORMING NEW NODE ABOUT ALL OTHER NODES");
 		
 		// .....
 		List<Host> hosts = new ArrayList<>();
@@ -103,7 +104,7 @@ public class ServerBean {
 	@Path("/users/loggedin")
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Collection<User> sendAllLoggedInUsersToNewNode(Host newHost) {
-		System.out.println("NOVOM CVORU SE SALJU SVI ULOGOVANI KORISNICI");
+		System.out.println("ALL USERS ARE BEING SEND TO NEW NODE");
 		
 		// .....
 		List<User> users = new ArrayList<>();
@@ -118,7 +119,7 @@ public class ServerBean {
 	@DELETE
 	@Path("/node/{alias}")
 	public String deleteNodeIfHandshakeHasFailed(@PathParam("alias")String alias) {
-		System.out.println("AKO JE HANDSHAKE BIO NEUSPESAN, OBRISI NOVI CVOR KOJI JE PROBAO DA SE DODA IZ SVIH LISTI");
+		System.out.println("HANDSHAKE FAILED, DELETE NEW NODE FROM ALL LISTS");
 		
 		db.getHosts().remove(alias);
 		

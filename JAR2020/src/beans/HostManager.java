@@ -69,6 +69,7 @@ public class HostManager {
 		}
 		// Ako je na master cvoru samo se dodaj u listu hostova
 		else {
+			System.out.println("MASTER HOST STARTUP, NO FURTHER ACTIONS ARE NEEDED");
 			db.getHosts().put(ip.getHostName(), new Host(ip.getHostName(), ip.getHostAddress(), true));
 		}
 		
@@ -77,21 +78,10 @@ public class HostManager {
 	@PreDestroy
 	public void preDestroy() {
 		System.out.println("\n\n--------------------------------------\nPREDESTROY");
-		
-		InetAddress ip = null;
-		try {
-			ip = InetAddress.getLocalHost();
-			System.out.println("New servers IP address: " + ip.getHostAddress());
-			System.out.println("New servers host name: " + ip.getHostName());
-			
-		} catch (UnknownHostException e) {
-			e.printStackTrace();
-			return;
-		}
-		
+				
 		// za svaki host pozovi brisanje cvora iz liste hosotva i obrisi i usere sa tog cvora
 		for (Host h : db.getHosts().values()) {
-			String hostPath = "http://" + h.getAddress() + ":8080/WAR2020/rest/server/node/" + ip.getHostName();
+			String hostPath = "http://" + h.getAddress() + ":8080/WAR2020/rest/server/node/" + myIP;
 			
 			try {
 				ResteasyClient client = new ResteasyClientBuilder().build();
@@ -113,30 +103,20 @@ public class HostManager {
 		// STEP 1 
 		// Javi masteru da je podignut novi cvor i master ce ga dodati u listu svojih hostova 
 		try {
+			System.out.println("STEP1:\nNEW NODE WITH IP: " + myIP + " SENDING REQUEST TO MASTER WHERE MASTER WILL ADD SAID NODE TO HOSTS LIST AND PASS IT TO OTHER NODES TO DO THE SAME");
 			ResteasyClient client = new ResteasyClientBuilder().build();
 			ResteasyWebTarget target = client.target(PATH+ "register");
 			Response res = target.request(MediaType.APPLICATION_JSON).post(Entity.entity(new Host(newHost.getAlias(), newHost.getAddress(), false), MediaType.APPLICATION_JSON));
 			String ret = res.readEntity(String.class);
+			System.out.println(ret);
 		}
 		catch (Exception e) {
 			System.out.println("ERROR IN STEP 1");
 			return false;
 		}
 		
-		// NE RADI
 		// STEP 2
-		// Trigger master
-		// Master cvor treba da javi svim ostalim cvorovima o postojanju novog cvora da bi ga oni dodali u listu
-		/*try {
-			ResteasyClient client = new ResteasyClientBuilder().build();
-			ResteasyWebTarget target = client.target(PATH+ "triggermaster");
-			Response res = target.request(MediaType.APPLICATION_JSON).post(Entity.entity(new Host(newHost.getAlias(), newHost.getAddress(), false), MediaType.APPLICATION_JSON));
-			String ret = res.readEntity(String.class);
-		}
-		catch (Exception e) {
-			System.out.println("ERROR IN STEP 2");
-			return false;
-		}*/
+		// Nalazi se u register new node 
 		
 		// STEP 3
 		// Novi cvor pita master cvor za spisak svih cvorova i master mu u odgovoru salje
@@ -145,7 +125,7 @@ public class HostManager {
 			ResteasyWebTarget target = client.target(PATH+ "nodes");
 			Response res = target.request(MediaType.APPLICATION_JSON).post(Entity.entity(new Host(newHost.getAlias(), newHost.getAddress(), false), MediaType.APPLICATION_JSON));
 			Host[] ret = res.readEntity(Host[].class);
-			
+			System.out.println("ALL EXISTING NODES ARE PASSED TO NEW NODE");
 			for (Host h : ret) {
 				System.out.println("IME: " + h.getAlias() + "\nIP: " + h.getAddress());
 				db.getHosts().put(h.getAlias(), h);
@@ -163,7 +143,7 @@ public class HostManager {
 			ResteasyWebTarget target = client.target(PATH+ "users/loggedin");
 			Response res = target.request(MediaType.APPLICATION_JSON).post(Entity.entity(new Host(newHost.getAlias(), newHost.getAddress(), false), MediaType.APPLICATION_JSON));
 			User[] ret = res.readEntity(User[].class);
-			
+			System.out.println("ALL USERS ARE BEING PASSED TO NEW NODE");
 			for (User u : ret) {
 				System.out.println("USERNAME: " + u.getUsername());
 				db.getLoggedInUsers().put(u.getUsername(), u);
@@ -177,10 +157,10 @@ public class HostManager {
 		return true;
 	}
 	
-	@Schedule(hour = "*", minute = "*/2", second = "*", persistent = false)
+	@Schedule(hour = "*", minute = "*/1", persistent = false)
 	private void heartbeat() {
 		if (myIP.equals(MASTERIP)) {
-			System.out.println("HAPPENED ON MASTER");
+			System.out.println("SCHEDULED EVENT HAPPENED ON MASTER, CHECK HEARTBEAT");
 			for (Host h : db.getHosts().values()) {
 				String hostPath = "http://" + h.getAddress() + ":8080/WAR2020/rest/server/node/";
 				try {
@@ -199,13 +179,13 @@ public class HostManager {
 						System.out.println("HEARTBEAT: " + ret);
 					}
 					catch (Exception e1){
-						System.out.println("DELETE THIS NODE");
+						System.out.println("DELETE THIS NODE...");
 					}
 				}
 			}
 		}
 		else {
-			System.out.println("HAPPENED ON REGULAR HOST, DO NOTHING");
+			System.out.println("SCHEDULED EVENT HAPPENED ON REGULAR HOST, DO NOTHING");
 		}
 	}
 
