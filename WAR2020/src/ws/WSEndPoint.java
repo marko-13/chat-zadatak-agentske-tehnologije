@@ -110,10 +110,13 @@ public class WSEndPoint {
 			if (sessions.containsKey(myMessage.getReceivers().get(0))) {
 				try {
 					sessions.get(myMessage.getReceivers().get(0)).getBasicRemote().sendText(msgJSON);
+					System.out.println("SEND PRIVATE MESSAGE TO USER ON THIS HOST");
+					return;
 				} catch (IOException e){
 					e.printStackTrace();
 				}
 			}
+			System.out.println("PRIVATE MESSAGE IS FOR USER ON ANOTHER HOST");
 			return;
 		}
 		// ako je kategorija 2 ili 3(dodaj i obrisi iz liste aktivnih korisnika) to se radi u onopen onclose

@@ -198,7 +198,7 @@ public class ChatBean implements ChatRemote, ChatLocal {
 	}
 	
 	
-	// prodji kroz sve ostale hostove, NE MORA SVUDA PROSLEDJUJEM USERA KAD SE LOGUJE PA SU SVE LISTE AZURNE
+	// prodji kroz sve ostale hostove,IPAK NE MORA SVUDA PROSLEDJUJEM USERA KAD SE LOGUJE PA SU SVE LISTE AZURNE
 	// GET ALL LOGGED IN USERS
 	@GET
 	@Path("users/loggedin")
@@ -218,7 +218,7 @@ public class ChatBean implements ChatRemote, ChatLocal {
 		
 	}
 	
-	// prodji kroz sve ostale hostove, NE MORA SVUDA PROSLEDJUEJM USERA KAD SE REGISTRUJE PA SU SVE LISTE AZURNE
+	// prodji kroz sve ostale hostove,IPAK NE MORA SVUDA PROSLEDJUEJM USERA KAD SE REGISTRUJE PA SU SVE LISTE AZURNE
 	// GET ALL REGISTERED USERS
 	@GET
 	@Path("users/registered")
@@ -248,6 +248,17 @@ public class ChatBean implements ChatRemote, ChatLocal {
 		System.out.println("\n\n-----------------------------------------------------------");
 		System.out.println("POGODIO SEND TO ALL ENDPOINT");
 		
+		InetAddress ip = null;
+		try {
+			ip = InetAddress.getLocalHost();
+			System.out.println("New servers IP address: " + ip.getHostAddress());
+			System.out.println("New servers host name: " + ip.getHostName());
+			
+		} catch (UnknownHostException e) {
+			e.printStackTrace();
+			return Response.status(400).entity("IP address error").build();
+		}
+		
 		ArrayList<String> messageReceivers = new ArrayList<>();
 		for (User u : db.getLoggedInUsers().values()) {
 			messageReceivers.add(u.getUsername());
@@ -262,6 +273,24 @@ public class ChatBean implements ChatRemote, ChatLocal {
 		db.getAllMessages().put(m.getId(), m);
 		
 		ws.echoTextMessage(m.getId().toString());
+		
+		for (Host h : db.getHosts().values()) {
+			if (h.getAddress().equals(ip.getHostAddress())) {
+				continue;
+			}
+			String hostPath = "http://" + h.getAddress() + ":8080/WAR2020/rest/server/message";
+			try {
+				ResteasyClient client = new ResteasyClientBuilder().build();
+				ResteasyWebTarget target = client.target(hostPath);
+				Response res = target.request().post(Entity.entity(new Message(m.getId(), m.getContent(), m.getSender(), m.getReceivers(), m.getTimeStamp(), m.getSubject(), m.getCategory()), MediaType.APPLICATION_JSON));
+				System.out.println("FORWARDED MESSAGE TO OTHER HOST");
+			}
+			catch (Exception e) {
+				System.out.println("ERROR IN REQUEST TO FORWAR MESSAGE TO OTHER HOSTS");
+				return Response.status(400).build();
+			}
+		}
+		
 		return Response.status(200).entity("OK").build();
 		/*
 		try {
@@ -287,6 +316,17 @@ public class ChatBean implements ChatRemote, ChatLocal {
 		System.out.println("\n\n-----------------------------------------------------------");
 		System.out.println("POGODIO SEND TO ONE ENDPOINT");
 		
+		InetAddress ip = null;
+		try {
+			ip = InetAddress.getLocalHost();
+			System.out.println("New servers IP address: " + ip.getHostAddress());
+			System.out.println("New servers host name: " + ip.getHostName());
+			
+		} catch (UnknownHostException e) {
+			e.printStackTrace();
+			return Response.status(400).entity("IP address error").build();
+		}
+		
 		System.out.println("Received message: " + m.getContent());
 		System.out.println("Message sender: " + m.getSender());
 		System.out.println("Message receivers: " + m.getReceivers());
@@ -300,6 +340,23 @@ public class ChatBean implements ChatRemote, ChatLocal {
 		//User u = db.getUsers().get(m.getReceivers().get(0));
 		//ws.privateTextMessage(m.getContent(), u.getUsername());
 		ws.echoTextMessage(m.getId().toString());
+		
+		for (Host h : db.getHosts().values()) {
+			if (h.getAddress().equals(ip.getHostAddress())) {
+				continue;
+			}
+			String hostPath = "http://" + h.getAddress() + ":8080/WAR2020/rest/server/message";
+			try {
+				ResteasyClient client = new ResteasyClientBuilder().build();
+				ResteasyWebTarget target = client.target(hostPath);
+				Response res = target.request().post(Entity.entity(new Message(m.getId(), m.getContent(), m.getSender(), m.getReceivers(), m.getTimeStamp(), m.getSubject(), m.getCategory()), MediaType.APPLICATION_JSON));
+				System.out.println("FORWARDED PRIVATE MESSAGE TO OTHER HOST");
+			}
+			catch (Exception e) {
+				System.out.println("ERROR IN REQUEST TO FORWAR PRIVATE MESSAGE TO OTHER HOSTS");
+				return Response.status(400).build();
+			}
+		}
 		
 		return Response.status(200).entity("OK").build();
 	}

@@ -180,18 +180,14 @@ public class ServerBean {
 	}
 	
 	
+	// kad se dobije poruka prosledi je na websocket
 	@GET
 	@Path("/message")
 	@Consumes(MediaType.TEXT_PLAIN)
-	public Response addNewUser(String myMessageJSON) {
+	public Response addNewUser(Message myMessage) {
 		
-		for (Session s : ws.getSessions().values()) {
-			try {
-				s.getBasicRemote().sendText(myMessageJSON);
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
+		db.getAllMessages().put(myMessage.getId(), myMessage);
+		ws.echoTextMessage(myMessage.getId().toString());
 		
 		return Response.status(200).build();
 	}
