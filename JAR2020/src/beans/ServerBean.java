@@ -123,12 +123,19 @@ public class ServerBean {
 		System.out.println("HANDSHAKE FAILED OR NODE HEARTBEAT FAILED OR NODE WAS DELETED");
 		System.out.println("DELETE SAID NODE FROM ALL LISTS AND DELETE LOGGED IN USERS FROM THAT NODE");
 		
+		String hostIP = db.getHosts().get(alias).getAddress();
+		
 		db.getHosts().remove(alias);
 		
 		for (User u : db.getLoggedInUsers().values()) {
-			if (u.getHost().equals(alias)) {
+			if (u.getHost().equals(hostIP)) {
 				System.out.println("REMOVING USERS: " + u.getUsername());
 				db.getLoggedInUsers().remove(u.getUsername());
+				
+				// i obrisi sa frontenda
+				Message myMessage = new Message(u.getUsername(), 3);
+				db.getAllMessages().put(myMessage.getId(), myMessage);
+				ws.echoTextMessage(myMessage.getId().toString());
 			}
 		}
 		System.out.println("BECAUSE HOST WAS STOPPED");
@@ -181,9 +188,9 @@ public class ServerBean {
 	
 	
 	// kad se dobije poruka prosledi je na websocket
-	@GET
+	@POST
 	@Path("/message")
-	@Consumes(MediaType.TEXT_PLAIN)
+	@Consumes(MediaType.APPLICATION_JSON)
 	public Response addNewUser(Message myMessage) {
 		
 		db.getAllMessages().put(myMessage.getId(), myMessage);

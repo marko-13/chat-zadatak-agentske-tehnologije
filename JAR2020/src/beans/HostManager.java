@@ -19,6 +19,7 @@ import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
 import org.jboss.resteasy.client.jaxrs.ResteasyWebTarget;
 
 import models.Host;
+import models.Message;
 import models.User;
 import ws.WSEndPoint;
 
@@ -183,6 +184,27 @@ public class HostManager {
 					catch (Exception e1){
 						System.out.println("DELETE THIS NODE..." + h.getAlias());
 						for (Host h2 : db.getHosts().values()) {
+							// ako si na masteru samo obrisi podatke ne salji zahtev
+							if (h2.getAddress().equals(myIP)) {
+								System.out.println("MASTER BRISE PODATKE O CVORU KOJI NIJE PROSAO HEARTBEAT");
+								db.getHosts().remove(h.getAlias());
+								
+								// prodji kroz sve korisnike od tog cvora i obrisi ih
+								for (User u : db.getLoggedInUsers().values()) {
+									if (u.getHost().equals(h.getAddress())) {
+										db.getLoggedInUsers().remove(u.getUsername());
+										//obavesti frontend o brisanju tog korisnika iz liste aktivnih
+										Message myMessage = new Message(u.getUsername(), 3);
+										db.getAllMessages().put(myMessage.getId(), myMessage);
+										ws.echoTextMessage(myMessage.getId().toString());
+									}
+								}
+								continue;
+							}
+							// ako si na tom cvoru koji treba obrisati samo continue
+							if (h2.getAddress().equals(h.getAddress())) {
+								continue;
+							}
 							String hostPath2 = "http://" + h2.getAddress() + ":8080/WAR2020/rest/server/node/" + myAlias;
 							
 							try {
