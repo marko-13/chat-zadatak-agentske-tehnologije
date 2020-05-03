@@ -150,6 +150,7 @@ public class ServerBean {
 		
 		String hostIP = db.getHosts().get(alias).getAddress();
 		
+		System.out.println("REMOVING DELETED HOST FROM MASTER AND MASTER IS SENDING INFORMATION TO OTHER HOSTS");
 		db.getHosts().remove(alias);
 		
 		for (User u : db.getLoggedInUsers().values()) {

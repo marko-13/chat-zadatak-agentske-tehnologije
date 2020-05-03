@@ -74,20 +74,19 @@ public class HostManager {
 					System.out.println("HANDSHAKE ERROR, DELETE NODE FROM HOST LIST ON REMAINING NODES");
 					// ... TESTIRAJ OVO
 					// handshake failed, rollback
-					for (Host h : db.getHosts().values()) {
-						String hostPath = "http://" + h.getAddress() + ":8080/WAR2020/rest/server/node/" + myAlias;
-						
-						try {
-							ResteasyClient client = new ResteasyClientBuilder().build();
-							ResteasyWebTarget target = client.target(hostPath);
-							Response res = target.request().delete();
-							String ret = res.readEntity(String.class);
-							System.out.println("DELETE HOST RET: " + ret);
-						}
-						catch (Exception e) {
-							System.out.println("ERROR IN NODE DELETION");
-							return;
-						}
+					// obavesti master da javi ostalima da te obrisu
+					String hostPath = "http://" + MASTERIP + ":8080/WAR2020/rest/server/node/informmaster/" + myAlias + "/" + MASTERIP;
+					
+					try {
+						ResteasyClient client = new ResteasyClientBuilder().build();
+						ResteasyWebTarget target = client.target(hostPath);
+						Response res = target.request().get();
+						String ret = res.readEntity(String.class);
+						System.out.println("DELETE HOST RET: " + ret);
+					}
+					catch (Exception e) {
+						System.out.println("ERROR IN NODE DELETION");
+						return;
 					}
 				}
 			}
@@ -208,7 +207,24 @@ public class HostManager {
 					}
 					catch (Exception e1){
 						System.out.println("DELETE THIS NODE..." + h.getAlias());
-						for (Host h2 : db.getHosts().values()) {
+						//-------------------------------------------------------
+						// obavesti master da javi ostalima da te obrisu
+						String hostPath2 = "http://" + MASTERIP + ":8080/WAR2020/rest/server/node/informmaster/" + h.getAlias() + "/" + MASTERIP;
+						
+						try {
+							ResteasyClient client = new ResteasyClientBuilder().build();
+							ResteasyWebTarget target = client.target(hostPath2);
+							Response res = target.request().get();
+							String ret = res.readEntity(String.class);
+							System.out.println("DELETE HOST RET: " + ret);
+							return;
+						}
+						catch (Exception e2) {
+							System.out.println("ERROR IN NODE DELETION");
+							return;
+						}
+						//-------------------------------------------------------
+						/*for (Host h2 : db.getHosts().values()) {
 							// ako si na masteru samo obrisi podatke ne salji zahtev
 							if (h2.getAddress().equals(myIP)) {
 								System.out.println("MASTER BRISE PODATKE O CVORU KOJI NIJE PROSAO HEARTBEAT");
@@ -243,7 +259,7 @@ public class HostManager {
 								System.out.println("ERROR IN NODE DELETION");
 								return;
 							}
-						}
+						}*/
 					}
 				}
 			}
