@@ -144,6 +144,29 @@ public class ServerBean {
 	}
 	
 	@GET
+	@Path("/node/informmaster/{alias}")
+	public String informMasterForDeletion(@PathParam("alias") String alias) {
+		
+		for (Host h : db.getHosts().values()) {
+			String hostPath = "http://" + h.getAddress() + ":8080/WAR2020/rest/server/node/" + alias;
+			
+			try {
+				ResteasyClient client = new ResteasyClientBuilder().build();
+				ResteasyWebTarget target = client.target(hostPath);
+				Response res = target.request().delete();
+				String ret = res.readEntity(String.class);
+				System.out.println("DELETE HOST RET: " + ret);
+			}
+			catch (Exception e) {
+				System.out.println("ERROR IN NODE DELETION");
+				return "Error";
+			}
+		}
+		
+		return "OK";
+	}
+	
+	@GET
 	@Path("/node")
 	public String heartbeat() {
 		System.out.println("PERIODICNO PROVERAVAJ DA LI SU SVI CVOROVI AKTIVNI");

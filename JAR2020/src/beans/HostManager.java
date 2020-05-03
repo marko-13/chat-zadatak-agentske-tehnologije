@@ -6,8 +6,8 @@ import java.net.UnknownHostException;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.ejb.EJB;
+import javax.ejb.LocalBean;
 import javax.ejb.Schedule;
-import javax.ejb.Schedules;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
 import javax.ws.rs.client.Entity;
@@ -25,10 +25,10 @@ import ws.WSEndPoint;
 
 @Singleton
 @Startup
-//@LocalBean
+@LocalBean
 public class HostManager {
 
-	private static final String PATHLOCAL = "http://localhost:8080/WAR2020/rest/server/";
+	//private static final String PATHLOCAL = "http://localhost:8080/WAR2020/rest/server/";
 	private static final String PATH = "http://192.168.1.10:8080/WAR2020/rest/server/";
 	private static final String MASTERIP = "192.168.1.10";
 	
@@ -66,8 +66,30 @@ public class HostManager {
 				System.out.println("HANDSHAKED SUCCEEDED");
 			}
 			else {
-				System.out.println("HANDSHAKE ERROR, DELETE NODE FROM HOST LIST ON REMAINING NODES");
-				// ...
+				System.out.println("HANDSHAKE ERROR, TRYING AGAIN");
+				if (handshake(new Host(ip.getHostName(), ip.getHostAddress(), false))) {
+					System.out.println("HANDSHAKED SUCCEEDED");
+				}
+				else {
+					System.out.println("HANDSHAKE ERROR, DELETE NODE FROM HOST LIST ON REMAINING NODES");
+					// ... TESTIRAJ OVO
+					// handshake failed, rollback
+					for (Host h : db.getHosts().values()) {
+						String hostPath = "http://" + h.getAddress() + ":8080/WAR2020/rest/server/node/" + myAlias;
+						
+						try {
+							ResteasyClient client = new ResteasyClientBuilder().build();
+							ResteasyWebTarget target = client.target(hostPath);
+							Response res = target.request().delete();
+							String ret = res.readEntity(String.class);
+							System.out.println("DELETE HOST RET: " + ret);
+						}
+						catch (Exception e) {
+							System.out.println("ERROR IN NODE DELETION");
+							return;
+						}
+					}
+				}
 			}
 		}
 		// Ako je na master cvoru samo se dodaj u listu hostova
@@ -82,14 +104,17 @@ public class HostManager {
 	public void preDestroy() {
 		System.out.println("\n\n--------------------------------------\nPREDESTROY");
 				
-		// za svaki host pozovi brisanje cvora iz liste hosotva i obrisi i usere sa tog cvora
-		for (Host h : db.getHosts().values()) {
-			String hostPath = "http://" + h.getAddress() + ":8080/WAR2020/rest/server/node/" + myAlias;
+		// obavesti master da javi ostalima da te obrisu
+			if (myIP.equals(MASTERIP)) {
+				System.out.println("MASTER SHUTDOWN. ALL HOSTS SHOULD ALREADY BE STOPPED");
+				return;
+			}
+			String hostPath = "http://" + MASTERIP + ":8080/WAR2020/rest/server/node/informmaster/" + myAlias;
 			
 			try {
 				ResteasyClient client = new ResteasyClientBuilder().build();
 				ResteasyWebTarget target = client.target(hostPath);
-				Response res = target.request().delete();
+				Response res = target.request().get();
 				String ret = res.readEntity(String.class);
 				System.out.println("DELETE HOST RET: " + ret);
 			}
@@ -97,7 +122,7 @@ public class HostManager {
 				System.out.println("ERROR IN NODE DELETION");
 				return;
 			}
-		}
+		
 	}
 	
 	
