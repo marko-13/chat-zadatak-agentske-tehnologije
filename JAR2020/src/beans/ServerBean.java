@@ -144,10 +144,30 @@ public class ServerBean {
 	}
 	
 	@GET
-	@Path("/node/informmaster/{alias}")
-	public String informMasterForDeletion(@PathParam("alias") String alias) {
+	@Path("/node/informmaster/{alias}/{masterip}")
+	public String informMasterForDeletion(@PathParam("alias") String alias, @PathParam("masterip") String masterip) {
+		
+		
+		String hostIP = db.getHosts().get(alias).getAddress();
+		
+		db.getHosts().remove(alias);
+		
+		for (User u : db.getLoggedInUsers().values()) {
+			if (u.getHost().equals(hostIP)) {
+				System.out.println("REMOVING USERS: " + u.getUsername());
+				db.getLoggedInUsers().remove(u.getUsername());
+				
+				// i obrisi sa frontenda
+				Message myMessage = new Message(u.getUsername(), 3);
+				db.getAllMessages().put(myMessage.getId(), myMessage);
+				ws.echoTextMessage(myMessage.getId().toString());
+			}
+		}
 		
 		for (Host h : db.getHosts().values()) {
+			if (h.getAddress().equals(masterip)) {
+				continue;
+			}
 			String hostPath = "http://" + h.getAddress() + ":8080/WAR2020/rest/server/node/" + alias;
 			
 			try {

@@ -109,7 +109,7 @@ public class HostManager {
 				System.out.println("MASTER SHUTDOWN. ALL HOSTS SHOULD ALREADY BE STOPPED");
 				return;
 			}
-			String hostPath = "http://" + MASTERIP + ":8080/WAR2020/rest/server/node/informmaster/" + myAlias;
+			String hostPath = "http://" + MASTERIP + ":8080/WAR2020/rest/server/node/informmaster/" + myAlias + "/" + MASTERIP;
 			
 			try {
 				ResteasyClient client = new ResteasyClientBuilder().build();
