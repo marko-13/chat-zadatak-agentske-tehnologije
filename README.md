@@ -3,7 +3,7 @@
 1) Importovati JAR2020, JAR2020Client, WAR2020 i EAR2020 u Eclipse IDE
 
 2) Otici u JAR2020 -> src -> beans -> HostManager i promeniti:
-    u PATH promenljivoj IP adresu u IP adresu Vaseg master racunara
+    u PATH promenljivoj IP adresu u IP adresu Vaseg master racunara i
     u MASTERIP promenljivoj IP adresu u IP adresu Vaseg master racunara
     
 3) Pokrenuti server desnim klikom na EAR2020 -> Run as -> Run on Server
