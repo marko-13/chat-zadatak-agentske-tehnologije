@@ -199,11 +199,11 @@ public class WSEndPoint {
 	@OnClose
 	public void close(@PathParam("username")String username, Session session) {
 		sessions.remove(username);
-		/*try {
+		try {
 			session.close();
 		} catch (IOException e1) {
 			e1.printStackTrace();
-		}*/
+		}
 		System.out.println("\n\n-----------------------------------------------------------");
 		System.out.println("SESSION CLOSED. ID:  " + session.getId());
 		System.out.println("SESSION CLOSED FOR USER: "+ username + "\nLIST OF REMAINING ACTIVE USERS:");
@@ -238,11 +238,11 @@ public class WSEndPoint {
 	@OnError
 	public void error(@PathParam("username")String username, Session session, Throwable t) {
 		sessions.remove(username);
-		/*try {
+		try {
 			session.close();
 		} catch (IOException e1) {
 			e1.printStackTrace();
-		}*/
+		}
 		System.out.println("\n\n-----------------------------------------------------------");
 		System.out.println("SESSION ERROR FOR USER: "+ username + "\nLIST OF REMAINING ACTIVE USERS:");
 		for (String str : sessions.keySet()) {
