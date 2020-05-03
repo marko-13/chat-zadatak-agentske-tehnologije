@@ -124,6 +124,18 @@ window.onload = function() {
 				
 			}
 		});
+		
+		$.ajax({
+			url: "rest/chat/messages2/" + username,
+			type: "GET",
+			success: function(data) {
+				for (msgObject of data) {
+					$('#divMsg').append('<div class="container"><h4>From: '+msgObject.sender+'</h4><h5>Subject: '+msgObject.subject+'</h5><p>'+msgObject.content+'</p><hr></div>');
+				}
+			}
+		});
+		
+
 }
 
 $(document).ready(function() {

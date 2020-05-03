@@ -370,6 +370,11 @@ public class ChatBean implements ChatRemote, ChatLocal {
 		System.out.println("POGODIO GET MESSAGES ENDPOINT");
 		
 		for(Message m : db.getAllMessages().values()) {
+			System.out.println("UDJE OVDE");
+			if (m.getCategory() == 2 || m.getCategory() == 3) {
+				System.out.println("SKIP HELP MESSAGES");
+				continue;
+			}
 			if (m.getReceivers().contains(username)) {
 				System.out.println("OD: " + m.getSender());
 				System.out.println("PORUKA: " + m.getContent());
@@ -377,6 +382,30 @@ public class ChatBean implements ChatRemote, ChatLocal {
 		}
 		
 		return Response.status(200).entity("OK").build();
+	}
+	
+	// GET ALL RECEIVED MESSAGES FROM USER
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("messages2/{username}")
+	public Collection<Message> getMessages2(@PathParam("username") String username) {
+		System.out.println("\n\n-----------------------------------------------------------");
+		System.out.println("POGODIO GET MESSAGES ENDPOINT");
+		
+		List<Message> messages = new ArrayList<>();
+		for(Message m : db.getAllMessages().values()) {
+			System.out.println("UDJE OVDE");
+			if (m.getCategory() == 2 || m.getCategory() == 3) {
+				System.out.println("SKIP HELP MESSAGES");
+				continue;
+			}
+			if (m.getReceivers().contains(username)) {
+				messages.add(m);
+			}
+		}
+		Collection<Message> myMessages = messages;
+		
+		return myMessages;
 	}
 
 	
