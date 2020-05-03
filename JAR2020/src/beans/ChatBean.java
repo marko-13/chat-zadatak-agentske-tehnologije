@@ -405,6 +405,10 @@ public class ChatBean implements ChatRemote, ChatLocal {
 				}
 				
 				for (Host h : db.getHosts().values()) {
+					if (h.getAddress().equals(ip.getHostAddress())) {
+						System.out.println("Sam sebi ne mora da salje request da obrise korisnika iz loggout na loggout");
+						continue;
+					}
 					System.out.println(h.getAddress());
 					String hostPath = "http://" + h.getAddress() + ":8080/WAR2020/rest/server/logoutUser";
 					try {

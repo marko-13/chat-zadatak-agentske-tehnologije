@@ -105,11 +105,27 @@ public class ServerBean {
 	@Path("/users/loggedin")
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Collection<User> sendAllLoggedInUsersToNewNode(Host newHost) {
-		System.out.println("ALL USERS ARE BEING SENT TO NEW NODE");
+		System.out.println("ALL LOGGED IN USERS ARE BEING SENT TO NEW NODE");
 		
 		// .....
 		List<User> users = new ArrayList<>();
 		for (User u : db.getLoggedInUsers().values()) {
+			System.out.println("User: " + u.getUsername());
+			users.add(u);
+		}
+		Collection<User> myUsers = users;
+		return myUsers;
+	}
+	
+	@POST
+	@Path("/users/registered")
+	@Consumes(MediaType.APPLICATION_JSON)
+	public Collection<User> sendAllRegisteredUsersToNewNode(Host newHost) {
+		System.out.println("ALL REGISTERED USERS ARE BEING SENT TO NEW NODE");
+		
+		// .....
+		List<User> users = new ArrayList<>();
+		for (User u : db.getUsers().values()) {
 			System.out.println("User: " + u.getUsername());
 			users.add(u);
 		}

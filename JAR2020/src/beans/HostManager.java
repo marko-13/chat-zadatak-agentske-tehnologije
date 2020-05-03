@@ -170,7 +170,7 @@ public class HostManager {
 			ResteasyWebTarget target = client.target(PATH+ "users/loggedin");
 			Response res = target.request(MediaType.APPLICATION_JSON).post(Entity.entity(new Host(newHost.getAlias(), newHost.getAddress(), false), MediaType.APPLICATION_JSON));
 			User[] ret = res.readEntity(User[].class);
-			System.out.println("ALL USERS ARE BEING PASSED TO NEW NODE");
+			System.out.println("ALL LOGGEDIN  USERS ARE BEING PASSED TO NEW NODE");
 			for (User u : ret) {
 				System.out.println("USERNAME: " + u.getUsername());
 				db.getLoggedInUsers().put(u.getUsername(), u);
@@ -178,6 +178,24 @@ public class HostManager {
 		}
 		catch (Exception e) {
 			System.out.println("ERROR IN STEP 4");
+			return false;
+		}
+		
+		// EXTRA STEP 5
+		// Master mora da posalje novom cvoru i spisak registrovanih korisnika
+		try {
+			ResteasyClient client = new ResteasyClientBuilder().build();
+			ResteasyWebTarget target = client.target(PATH+ "users/registered");
+			Response res = target.request(MediaType.APPLICATION_JSON).post(Entity.entity(new Host(newHost.getAlias(), newHost.getAddress(), false), MediaType.APPLICATION_JSON));
+			User[] ret = res.readEntity(User[].class);
+			System.out.println("ALL REGISTERED  USERS ARE BEING PASSED TO NEW NODE");
+			for (User u : ret) {
+				System.out.println("USERNAME: " + u.getUsername());
+				db.getUsers().put(u.getUsername(), u);
+			}
+		}
+		catch (Exception e) {
+			System.out.println("ERROR IN STEP 5");
 			return false;
 		}
 		
